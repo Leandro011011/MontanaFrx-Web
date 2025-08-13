@@ -26,7 +26,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 
-  <!-- CSS del proyecto (en la raíz) -->
+  <!-- CSS -->
   <link rel="stylesheet" href="./Estilo.css" />
 </head>
 <body>
@@ -41,7 +41,10 @@
       </a>
 
       <nav class="main-nav" aria-label="Navegación principal">
-        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú">☰</button>
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú">
+          <span class="nav-bars" aria-hidden="true"></span>
+          <span class="sr-only">Menú</span>
+        </button>
         <ul id="nav-menu" class="nav-list">
           <li><a href="#inicio">Inicio</a></li>
           <li><a href="#sobre-mi">Sobre mí</a></li>
@@ -53,8 +56,7 @@
       </nav>
 
       <div class="header-ctas">
-        <a class="btn glow" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en Kick</a>
-        <a class="btn" href="https://discord.gg/sxcJVwzK8Z" target="_blank" rel="noopener">Discord</a>
+        <a class="btn glow cta-small" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en Kick</a>
       </div>
     </div>
   </header>
@@ -63,29 +65,24 @@
     <!-- HERO -->
     <section id="inicio" class="hero" aria-label="Inicio">
       <div class="container hero-inner">
-        <div>
+        <div class="hero-copy">
           <p class="kicker">Streamer · IRL · Setup</p>
           <h1>MontanaFrx</h1>
-          <p>Streamer IRL y de setup: charlas, música y partidas de <em>Among Us</em>. Comunidad chill, vibes y risas.</p>
+          <p class="hero-desc">Streamer IRL y de setup: charlas, música y partidas de <em>Among Us</em>. Comunidad chill, vibes y risas.</p>
+
           <div class="hero-actions">
             <a class="btn primary glow" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en vivo en Kick</a>
             <a class="btn glow" href="https://discord.gg/sxcJVwzK8Z" target="_blank" rel="noopener">Unirse al Discord</a>
           </div>
-          <div class="hero-card" style="margin-top:12px">
+
+          <div class="hero-card lema-wrap">
             <div class="lema"><span id="typewriter" class="typewriter" aria-label="Lema"></span></div>
           </div>
         </div>
 
-        <aside class="hero-card">
-          <!-- FOTO del repo (raíz) -->
+        <aside class="hero-card hero-media">
           <img id="avatar" class="avatar" src="./monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
           <p class="lemma-secondary">“BIENVENIDOS A LOS M, UNANSE A LOS M”</p>
-          <!-- Player de Kick (opcional) -->
-          <!--
-          <iframe title="Kick Player" src="https://player.kick.com/montanafrx?autoplay=false"
-            style="width:100%;aspect-ratio:16/9;border:1px solid var(--border);border-radius:12px;margin-top:8px"
-            allowfullscreen referrerpolicy="no-referrer"></iframe>
-          -->
         </aside>
       </div>
 
@@ -127,7 +124,7 @@
         </div>
         <div class="about-card">
           <p>En este canal encontrarás streams relajados, interacción directa con la comunidad y buen humor. Me gusta explorar la ciudad en IRL, reaccionar a música nueva y jugar con ustedes.</p>
-          <ul>
+          <ul class="about-list">
             <li>💬 Charlas y temas de actualidad</li>
             <li>🎵 Reacciones y playlists</li>
             <li>🎮 Partidas con la comunidad</li>
@@ -190,20 +187,20 @@
       <div class="container">
         <h2 id="contacto-title">Contacto</h2>
         <form id="contact-form" class="form" novalidate>
-          <div>
+          <div class="form-row">
             <label for="name">Nombre</label>
             <input id="name" class="input" name="name" type="text" minlength="2" required />
           </div>
-          <div>
+          <div class="form-row">
             <label for="email">Email</label>
             <input id="email" class="input" name="email" type="email" required />
           </div>
-          <div>
+          <div class="form-row">
             <label for="message">Mensaje</label>
             <textarea id="message" class="textarea" name="message" rows="4" minlength="10" required></textarea>
           </div>
           <div class="helper" id="form-helper" role="status" aria-live="polite"></div>
-          <button class="btn glow" type="submit">Enviar</button>
+          <button class="btn glow btn-block" type="submit">Enviar</button>
         </form>
       </div>
     </section>
@@ -225,7 +222,8 @@
   <!-- Schema.org Person (se rellena desde JS) -->
   <script type="application/ld+json" id="schema-person"></script>
 
-  <!-- JS del proyecto (en la raíz) -->
+  <!-- JS -->
+   <!--hola como vas-->
   <script src="./funciones.js"></script>
 </body>
 </html>
