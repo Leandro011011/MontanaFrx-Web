@@ -12,7 +12,7 @@
   <meta property="og:description" content="Charlas, música y Among Us. ¡Únete a los M!" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://kick.com/montanafrx" />
-  <meta property="og:image" content="img/profile.jpg" />
+  <meta property="og:image" content="monta.jpeg" />
 
   <!-- Favicon (SVG data URI) -->
   <link rel="icon" href="data:image/svg+xml;utf8,
@@ -26,6 +26,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 
+  <!-- CSS del proyecto (en la raíz) -->
   <link rel="stylesheet" href="./Estilo.css" />
 </head>
 <body>
@@ -35,7 +36,7 @@
   <header class="site-header" role="banner">
     <div class="container header-inner">
       <a href="#inicio" class="brand" aria-label="Ir a inicio">
-        
+        <span class="logo" aria-hidden="true">⚡</span>
         <span class="brand-text">MontanaFrx</span>
       </a>
 
@@ -76,10 +77,10 @@
         </div>
 
         <aside class="hero-card">
-          <!-- FOTO: usa /img/profile.jpg (descarga desde el link de IG y renómbrala) -->
+          <!-- FOTO del repo (raíz) -->
           <img id="avatar" class="avatar" src="./monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
           <p class="lemma-secondary">“BIENVENIDOS A LOS M, UNANSE A LOS M”</p>
-          <!-- Opcional: player público de Kick (si tu hosting lo permite) -->
+          <!-- Player de Kick (opcional) -->
           <!--
           <iframe title="Kick Player" src="https://player.kick.com/montanafrx?autoplay=false"
             style="width:100%;aspect-ratio:16/9;border:1px solid var(--border);border-radius:12px;margin-top:8px"
@@ -88,6 +89,7 @@
         </aside>
       </div>
 
+      <!-- Temáticas / Features -->
       <div class="container features" aria-label="Temáticas">
         <div class="feature">
           <span class="icon" aria-hidden="true">
@@ -220,9 +222,10 @@
   <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite">Mensaje enviado ✔</div>
 
-  <!-- Schema.org Person -->
+  <!-- Schema.org Person (se rellena desde JS) -->
   <script type="application/ld+json" id="schema-person"></script>
 
-  <script src="assets/js/app.js"></script>
+  <!-- JS del proyecto (en la raíz) -->
+  <script src="./funciones.js"></script>
 </body>
 </html>
