@@ -186,11 +186,17 @@ h1,h2,h3{font-family:Poppins,Inter,Arial,sans-serif;margin:0 0 .5rem}
   .socials{grid-template-columns:repeat(5,1fr)}
   .about-grid{grid-template-columns:1fr 1fr}
 }
-.clip-actions button svg {
-    fill: white; /* Si son SVG con atributo fill */
-    color: white; /* Si se usa color para el ícono */
-}
 
-.clip-actions button:hover svg {
-    opacity: 0.8; /* Un pequeño efecto al pasar el mouse */
+/* ===========================
+   OVERRIDE: Íconos edición/eliminación en blanco
+   (solo dentro de la sección #clips para no afectar otros iconos)
+   =========================== */
+#clips .icon-btn svg{
+  stroke:#fff !important;
+  fill:#fff !important;
+  color:#fff !important;
+}
+#clips .icon-btn:hover svg{
+  opacity:.9;
+  filter:drop-shadow(0 0 4px rgba(255,255,255,.25));
 }
