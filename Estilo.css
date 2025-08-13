@@ -75,12 +75,13 @@ h1,h2,h3{font-family:Poppins,Inter,Arial,sans-serif;margin:0 0 .5rem}
 
 /* Hero */
 .hero{padding:28px 0;border-bottom:1px solid var(--border)}
-.hero-inner{display:grid;grid-template-columns:1fr;gap:16px;align-items:center}
+.hero-inner{display:grid;grid-template-columns:1fr;gap:24px;align-items:center} /* +gap */
 .kicker{color:var(--accent);text-transform:uppercase;letter-spacing:.2em;font-size:.8rem}
 .hero h1{font-size:clamp(1.8rem,6.8vw,3rem);line-height:1.15}
 .hero-desc{color:var(--muted);margin:.25rem 0 1rem}
-.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px} /* +separación */
 .hero-card{background:linear-gradient(180deg, rgba(0,255,136,.08), rgba(0,0,0,.0));border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.lema-wrap{margin-top:28px !important;} /* ↓ baja el cuadro del lema */
 .lema{font-family:Poppins,Inter,Arial;font-weight:700;font-size:clamp(1rem,4.2vw,1.25rem)}
 .typewriter{border-right:2px solid var(--accent);white-space:nowrap;overflow:hidden}
 .hero-media{display:grid;place-items:center;text-align:center}
