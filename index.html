@@ -14,7 +14,7 @@
   <meta property="og:url" content="https://kick.com/montanafrx" />
   <meta property="og:image" content="monta.jpeg" />
 
-  <!-- Favicon -->
+  <!-- Favicon (SVG inline) -->
   <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B0B'/%3E%3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E%3C/svg%3E">
 
   <!-- Fuentes -->
@@ -22,11 +22,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="Estilo.css?v=8">
+  <!-- CSS -->
+  <link rel="stylesheet" href="Estilo.css" />
 </head>
 <body>
   <a class="skip-link" href="#main">Saltar al contenido</a>
 
+  <!-- Header -->
   <header class="site-header" role="banner">
     <div class="container header-inner">
       <a href="#inicio" class="brand" aria-label="Ir a inicio">
@@ -35,7 +37,7 @@
       </a>
 
       <nav class="main-nav" aria-label="Navegación principal">
-        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú">
+        <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú">
           <span class="nav-bars" aria-hidden="true"></span>
           <span class="sr-only">Menú</span>
         </button>
@@ -70,12 +72,14 @@
           </div>
 
           <div class="hero-card lema-wrap">
-            <div class="lema"><span id="typewriter" class="typewriter" aria-label="Lema"></span></div>
+            <!-- Este span lo escribe el typewriter en JS -->
+            <div class="lema"><span id="typewriter" class="typewriter" aria-label="Lema">“BIENVENIDOS A LOS M, UNANSE A LOS M”</span></div>
           </div>
         </div>
 
         <aside class="hero-card hero-media">
-          <img id="avatar" class="avatar" src="monta.jpeg" alt="Avatar de MontanaFrx" loading="eager">
+          <!-- Si la URL de Instagram no es directa, usa esta imagen local -->
+          <img class="avatar" src="monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
           <p class="lemma-secondary">“BIENVENIDOS A LOS M, UNANSE A LOS M”</p>
         </aside>
       </div>
@@ -86,7 +90,7 @@
           <span class="icon" aria-hidden="true">
             <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 8h4l2-3h4l2 3h4v11H4zM8 13h8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
-          <div><strong>IRL</strong><div class="muted">Salidas y vida diaria de un Trabuco</div></div>
+          <div><strong>IRL</strong><div class="muted">Salidas y vida diaria</div></div>
         </div>
         <div class="feature">
           <span class="icon" aria-hidden="true">
@@ -109,7 +113,7 @@
       </div>
     </section>
 
-    <!-- REDES (movida aquí) -->
+    <!-- REDES (movida aquí, antes de Sobre mí) -->
     <section id="redes" class="section" aria-labelledby="redes-title">
       <div class="container">
         <h2 id="redes-title">Redes sociales</h2>
@@ -161,7 +165,9 @@
             <thead>
               <tr><th>Día</th><th>Horario</th><th>Estado</th></tr>
             </thead>
-            <tbody id="schedule-body"></tbody>
+            <tbody id="schedule-body">
+              <!-- Se llena vía JS con LUN 21:45–01:00; Mar/Mié/Jue/Vie/Dom igual; Sábado descanso -->
+            </tbody>
           </table>
         </div>
       </div>
@@ -174,8 +180,10 @@
           <h2 id="clips-title">Clips destacados</h2>
           <button id="btn-add-clip" class="btn glow" type="button">➕ Agregar clip</button>
         </div>
-        <p class="lead">Puedes agregar clips por URL (Kick/YouTube) o seleccionar un video local (se mostrará como <code>blob:</code> en esta sesión).</p>
-        <div class="clip-grid" id="clip-grid" role="list"></div>
+        <p class="lead">Agrega clips por URL (Kick/YouTube) o sube un video local (se mostrará como <code>blob:</code> en esta sesión).</p>
+        <div class="clip-grid" id="clip-grid" role="list">
+          <!-- Tarjetas renderizadas por clips.js -->
+        </div>
       </div>
     </section>
 
@@ -186,11 +194,11 @@
         <form id="contact-form" class="form" novalidate>
           <div class="form-row">
             <label for="name">Nombre</label>
-            <input id="name" class="input" name="name" type="text" minlength="2" required>
+            <input id="name" class="input" name="name" type="text" minlength="2" required />
           </div>
           <div class="form-row">
             <label for="email">Email</label>
-            <input id="email" class="input" name="email" type="email" required>
+            <input id="email" class="input" name="email" type="email" required />
           </div>
           <div class="form-row">
             <label for="message">Mensaje</label>
@@ -203,6 +211,7 @@
     </section>
   </main>
 
+  <!-- Footer -->
   <footer class="site-footer" role="contentinfo">
     <div class="container footer-inner">
       <p>© <span id="year"></span> MontanaFrx · Sitio fan/brand personal.</p>
@@ -213,24 +222,26 @@
     </div>
   </footer>
 
-  <!-- Modal CRUD Clips -->
+  <!-- MODAL CRUD CLIPS (estructura; la lógica vendrá en clips.js) -->
   <div id="clip-modal" class="modal hidden" aria-hidden="true" role="dialog" aria-labelledby="clip-modal-title">
     <div class="modal__content" role="document">
       <div class="modal__header">
         <h3 id="clip-modal-title">Agregar clip</h3>
-        <button id="clip-modal-close" class="icon-btn" aria-label="Cerrar">${/* x icon */''}<svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button id="clip-modal-close" class="icon-btn" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
       </div>
       <form id="clip-form" class="modal__form">
-        <input type="hidden" id="clip-id">
-        <label>Título</label>
-        <input id="clip-title" type="text" required class="input">
+        <input type="hidden" id="clip-id" />
+        <label for="clip-title">Título</label>
+        <input id="clip-title" type="text" required class="input" />
 
-        <label>URL del clip (Kick/YouTube u otra)</label>
-        <input id="clip-url" type="url" placeholder="https://…" class="input">
+        <label for="clip-url">URL del clip (Kick/YouTube u otra)</label>
+        <input id="clip-url" type="url" placeholder="https://…" class="input" />
 
         <div class="file-row">
-          <label>O subir un video local</label>
-          <input id="clip-file" type="file" accept="video/*">
+          <label for="clip-file">O subir un video local</label>
+          <input id="clip-file" type="file" accept="video/*" />
         </div>
 
         <div id="clip-preview" class="preview"></div>
@@ -247,9 +258,11 @@
   <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite">Mensaje enviado ✔</div>
 
-  <!-- Schema.org Person -->
+  <!-- Schema.org Person (lo llenará main.js) -->
   <script type="application/ld+json" id="schema-person"></script>
 
-  <script src="funciones.js?v=8"></script>
+  <!-- 🧩 Cuando confirmes, agrego: -->
+  <!-- <script src="main.js" defer></script> -->
+  <!-- <script src="clips.js" defer></script> -->
 </body>
 </html>
