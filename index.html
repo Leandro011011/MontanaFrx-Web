@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>MontanaFrx — Streamer IRL y Setup</title>
   <meta name="description" content="Streamer ecuatoriano de IRL y setup. Charlas, música y partidas de Among Us. ¡Únete a los M!" />
   <meta name="theme-color" content="#0B0B0B" />
@@ -23,7 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 
   <!-- CSS -->
-  <link rel="stylesheet" href="Estilo.css" />
+  <link rel="stylesheet" href="./Estilo.css" />
 </head>
 <body>
   <a class="skip-link" href="#main">Saltar al contenido</a>
@@ -72,7 +73,7 @@
           </div>
 
           <div class="hero-card lema-wrap">
-            <!-- Este span lo escribe el typewriter en JS -->
+            <!-- El texto se anima con typewriter desde funciones.js -->
             <div class="lema"><span id="typewriter" class="typewriter" aria-label="Lema">“BIENVENIDOS A LOS M, UNANSE A LOS M”</span></div>
           </div>
         </div>
@@ -113,7 +114,7 @@
       </div>
     </section>
 
-    <!-- REDES (movida aquí, antes de Sobre mí) -->
+    <!-- REDES (antes de Sobre mí) -->
     <section id="redes" class="section" aria-labelledby="redes-title">
       <div class="container">
         <h2 id="redes-title">Redes sociales</h2>
@@ -166,7 +167,7 @@
               <tr><th>Día</th><th>Horario</th><th>Estado</th></tr>
             </thead>
             <tbody id="schedule-body">
-              <!-- Se llena vía JS con LUN 21:45–01:00; Mar/Mié/Jue/Vie/Dom igual; Sábado descanso -->
+              <!-- Se llena por funciones.js con LUN 21:45–01:00; Mar/Mié/Jue/Vie/Dom igual; Sábado descanso -->
             </tbody>
           </table>
         </div>
@@ -222,7 +223,7 @@
     </div>
   </footer>
 
-  <!-- MODAL CRUD CLIPS (estructura; la lógica vendrá en clips.js) -->
+  <!-- MODAL CRUD CLIPS -->
   <div id="clip-modal" class="modal hidden" aria-hidden="true" role="dialog" aria-labelledby="clip-modal-title">
     <div class="modal__content" role="document">
       <div class="modal__header">
@@ -258,11 +259,11 @@
   <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite">Mensaje enviado ✔</div>
 
-  <!-- Schema.org Person (lo llenará main.js) -->
+  <!-- Schema.org Person (lo llena funciones.js) -->
   <script type="application/ld+json" id="schema-person"></script>
 
-  <!-- 🧩 Cuando confirmes, agrego: -->
-  <!-- <script src="main.js" defer></script> -->
-  <!-- <script src="clips.js" defer></script> -->
+  <!-- Scripts (asegúrate de tener estos archivos en la raíz) -->
+  <script src="./funciones.js" defer></script>
+  <script src="./clips.js" defer></script>
 </body>
 </html>
