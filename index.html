@@ -14,25 +14,19 @@
   <meta property="og:url" content="https://kick.com/montanafrx" />
   <meta property="og:image" content="monta.jpeg" />
 
-  <!-- Favicon (SVG data URI) -->
-  <link rel="icon" href="data:image/svg+xml;utf8,
-  %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E
-  %3Crect width='64' height='64' rx='14' fill='%230B0B0B'/%3E
-  %3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E
-  %3C/svg%3E" />
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B0B'/%3E%3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E%3C/svg%3E">
 
   <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="Estilo.css?v=7" />
+  <link rel="stylesheet" href="Estilo.css?v=8">
 </head>
 <body>
   <a class="skip-link" href="#main">Saltar al contenido</a>
 
-  <!-- Header / Navbar -->
   <header class="site-header" role="banner">
     <div class="container header-inner">
       <a href="#inicio" class="brand" aria-label="Ir a inicio">
@@ -81,12 +75,12 @@
         </div>
 
         <aside class="hero-card hero-media">
-          <img id="avatar" class="avatar" src="monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
+          <img id="avatar" class="avatar" src="monta.jpeg" alt="Avatar de MontanaFrx" loading="eager">
           <p class="lemma-secondary">“BIENVENIDOS A LOS M, UNANSE A LOS M”</p>
         </aside>
       </div>
 
-      <!-- Temáticas / Features -->
+      <!-- Temáticas -->
       <div class="container features" aria-label="Temáticas">
         <div class="feature">
           <span class="icon" aria-hidden="true">
@@ -180,7 +174,7 @@
           <h2 id="clips-title">Clips destacados</h2>
           <button id="btn-add-clip" class="btn glow" type="button">➕ Agregar clip</button>
         </div>
-        <p class="lead">Puedes agregar clips por URL o desde tu PC (los videos locales se muestran con <code>blob:</code> y no persisten tras recargar).</p>
+        <p class="lead">Puedes agregar clips por URL (Kick/YouTube) o seleccionar un video local (se mostrará como <code>blob:</code> en esta sesión).</p>
         <div class="clip-grid" id="clip-grid" role="list"></div>
       </div>
     </section>
@@ -192,11 +186,11 @@
         <form id="contact-form" class="form" novalidate>
           <div class="form-row">
             <label for="name">Nombre</label>
-            <input id="name" class="input" name="name" type="text" minlength="2" required />
+            <input id="name" class="input" name="name" type="text" minlength="2" required>
           </div>
           <div class="form-row">
             <label for="email">Email</label>
-            <input id="email" class="input" name="email" type="email" required />
+            <input id="email" class="input" name="email" type="email" required>
           </div>
           <div class="form-row">
             <label for="message">Mensaje</label>
@@ -219,13 +213,43 @@
     </div>
   </footer>
 
+  <!-- Modal CRUD Clips -->
+  <div id="clip-modal" class="modal hidden" aria-hidden="true" role="dialog" aria-labelledby="clip-modal-title">
+    <div class="modal__content" role="document">
+      <div class="modal__header">
+        <h3 id="clip-modal-title">Agregar clip</h3>
+        <button id="clip-modal-close" class="icon-btn" aria-label="Cerrar">${/* x icon */''}<svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>
+      <form id="clip-form" class="modal__form">
+        <input type="hidden" id="clip-id">
+        <label>Título</label>
+        <input id="clip-title" type="text" required class="input">
+
+        <label>URL del clip (Kick/YouTube u otra)</label>
+        <input id="clip-url" type="url" placeholder="https://…" class="input">
+
+        <div class="file-row">
+          <label>O subir un video local</label>
+          <input id="clip-file" type="file" accept="video/*">
+        </div>
+
+        <div id="clip-preview" class="preview"></div>
+
+        <div class="modal__actions">
+          <button type="submit" class="btn glow">Guardar</button>
+          <button type="button" id="clip-cancel" class="btn">Cancelar</button>
+        </div>
+        <p class="muted" style="margin:6px 0 0">Nota: los videos locales usan URL <code>blob:</code> y no persisten tras recargar.</p>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite">Mensaje enviado ✔</div>
 
   <!-- Schema.org Person -->
   <script type="application/ld+json" id="schema-person"></script>
 
-  <!-- JS -->
-  <script src="funciones.js?v=7"></script>
+  <script src="funciones.js?v=8"></script>
 </body>
 </html>

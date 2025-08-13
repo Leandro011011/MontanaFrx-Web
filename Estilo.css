@@ -3,8 +3,6 @@
   --accent:#00FF88; --radius:16px; --shadow:0 8px 28px rgba(0,0,0,.35);
   --container:1180px; --t:200ms ease;
 }
-
-/* Base */
 *{box-sizing:border-box} html:focus-within{scroll-behavior:smooth}
 body{margin:0;background:
   radial-gradient(1200px 600px at 80% -10%,rgba(0,255,136,.08),transparent 60%),
@@ -35,7 +33,7 @@ h1,h2,h3{font-family:Poppins,Inter,Arial,sans-serif;margin:0 0 .5rem}
 .nav-list a:hover{background:#0b0d11;border-color:var(--border)}
 .header-ctas{display:none}
 
-/* Buttons */
+/* Botones */
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid var(--border);background:#12141a;color:var(--fg);cursor:pointer;transition:transform var(--t), box-shadow var(--t), border-color var(--t)}
 .btn.primary{border-color:transparent;background:linear-gradient(90deg,var(--accent),#00d688);color:#0B0B0B;font-weight:700}
 .btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 18px rgba(0,255,136,.2)}
@@ -107,10 +105,21 @@ h1,h2,h3{font-family:Poppins,Inter,Arial,sans-serif;margin:0 0 .5rem}
 .input,.textarea{width:100%;background:#0b0d11;color:var(--fg);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
 .helper{min-height:18px;color:var(--muted)}
 
+/* Modal */
+.modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);z-index:80}
+.modal.hidden{display:none}
+.modal__content{width:min(560px,92vw);background:#0f1115;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:14px}
+.modal__header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.modal__form{display:grid;gap:10px}
+.file-row input[type=file]{display:block;margin-top:6px}
+.preview{margin-top:4px}
+.preview video{width:100%;border-radius:12px;border:1px solid var(--border)}
+.modal__actions{display:flex;gap:8px;flex-wrap:wrap}
+
 /* Footer & Toast */
 .site-footer{padding:18px 0;font-size:.95rem}
 .footer-inner{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#0b0d11;border:1px solid var(--border);color:var(--fg);padding:10px 14px;border-radius:999px;box-shadow:var(--shadow);display:none;z-index:60}
+.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#0b0d11;border:1px solid var(--border);color:var(--fg);padding:10px 14px;border-radius:999px;box-shadow:var(--shadow);display:none;z-index:90}
 
 /* Breakpoints */
 @media (min-width:560px){
