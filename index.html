@@ -1,261 +1,278 @@
-/* ===========================
-   funciones.js — UI, accesibilidad, horarios y helpers
-   =========================== */
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-/* ---- Helpers PRIMERO (evita TDZ) ---- */
-export const $  = (sel, ctx = document) => ctx.querySelector(sel);
-export const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+  <title>MontanaFrx — Streamer IRL y Setup</title>
+  <meta name="description" content="Streamer ecuatoriano de IRL y setup. Charlas, música y partidas de Among Us. ¡Únete a los M!" />
+  <meta name="theme-color" content="#0B0B0B" />
 
-export function setCloudStatus(text, kind = "info") {
-  // No dependas de $ aquí para evitar TDZ si cambias el orden
-  const el = document.getElementById("cloud-status");
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = kind === "error" ? "#ff6b6b" : "var(--muted)";
-}
+  <!-- Open Graph -->
+  <meta property="og:title" content="MontanaFrx — Streamer IRL y Setup" />
+  <meta property="og:description" content="Charlas, música y Among Us. ¡Únete a los M!" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kick.com/montanafrx" />
+  <meta property="og:image" content="monta.jpeg" />
 
-export function showToast(message = "Hecho") {
-  const toast = document.getElementById("toast");
-  if (!toast) { alert(message); return; }
-  toast.textContent = message;
-  toast.style.display = "block";
-  toast.setAttribute("aria-live", "polite");
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => (toast.style.display = "none"), 2400);
-}
+  <!-- Favicon (SVG data URI) -->
+  <link rel="icon" href="data:image/svg+xml;utf8,
+  %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E
+  %3Crect width='64' height='64' rx='14' fill='%230B0B0B'/%3E
+  %3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E
+  %3C/svg%3E" />
 
-export const MAX_CLIPS = 6;
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
 
-/* ===========================
-   Firebase (App, Firestore, Storage)
-   =========================== */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  <!-- Estilos -->
+  <link rel="stylesheet" href="./Estilo.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
 
-/** 🔧 REEMPLAZA POR TU CONFIG DE FIREBASE **/
-const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROJECT_ID.firebaseapp.com",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_PROJECT_ID.appspot.com",
-  messagingSenderId: "XXXXX",
-  appId: "TU_APP_ID"
-};
+  <!-- Banner de estado de nube (lo actualiza funciones.js) -->
+  <div id="cloud-status" class="muted" style="font-size:.9rem;text-align:center;padding:6px 10px;border-bottom:1px solid var(--border);background:#0f1115;">
+    Conectando a la nube…
+  </div>
 
-let app, db, storage;
-try {
-  setCloudStatus("Conectando a la nube…");
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  setCloudStatus("Conectado ✔");
-} catch (err) {
-  console.error("Firebase init error:", err);
-  setCloudStatus("Error al conectar a la nube", "error");
-}
+  <!-- Header / Navbar -->
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <a href="#inicio" class="brand" aria-label="Ir a inicio">
+        <span class="logo">⚡</span>
+        <span class="brand-text">MontanaFrx</span>
+      </a>
 
-export { db, storage };
+      <nav class="main-nav" aria-label="Navegación principal">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú">
+          <span class="nav-bars"></span>
+        </button>
+        <ul id="nav-menu" class="nav-list">
+          <li><a href="#inicio">Inicio</a></li>
+          <li><a href="#redes">Redes</a></li>
+          <li><a href="#sobre-mi">Sobre mí</a></li>
+          <li><a href="#horarios">Horarios</a></li>
+          <li><a href="#clips">Clips</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </nav>
 
-/* ===========================
-   Navbar móvil + scroll suave
-   =========================== */
-(function navSetup() {
-  const btn = $(".nav-toggle");
-  const list = $("#nav-menu");
-  if (!btn || !list) return;
+      <div class="header-ctas">
+        <a class="btn glow" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en Kick</a>
+      </div>
+    </div>
+  </header>
 
-  btn.addEventListener("click", () => {
-    const open = list.classList.toggle("open");
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
-  });
+  <main id="main">
+    <!-- HERO -->
+    <section id="inicio" class="hero" aria-label="Inicio">
+      <div class="container hero-inner">
+        <div>
+          <p class="kicker">Streamer · IRL · Setup</p>
+          <h1>MontanaFrx</h1>
+          <p class="hero-desc">Streamer IRL y de setup: charlas, música y partidas de <em>Among Us</em>. Comunidad chill, vibes y risas.</p>
+          <div class="hero-actions">
+            <a class="btn primary glow" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en vivo en Kick</a>
+            <a class="btn glow" href="https://discord.gg/sxcJVwzK8Z" target="_blank" rel="noopener">Unirse al Discord</a>
+          </div>
 
-  list.addEventListener("click", (e) => {
-    if (e.target.matches("a")) {
-      list.classList.remove("open");
-      btn.setAttribute("aria-expanded", "false");
-    }
-  });
+          <!-- Lema (se baja con CSS .lema-wrap; ya lo usas a 54px) -->
+          <div class="hero-card lema-wrap" style="margin-top:54px">
+            <div class="lema"><span id="typewriter" class="typewriter">“BIENVENIDOS A LOS M, UNANSE A LOS M”</span></div>
+          </div>
+        </div>
 
-  $$('a[href^="#"]').forEach(a => {
-    a.addEventListener("click", (e) => {
-      const id = a.getAttribute("href");
-      const target = id && id !== "#" ? $(id) : null;
-      if (!target) return;
-      e.preventDefault();
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
-})();
+        <aside class="hero-card hero-media">
+          <img id="avatar" class="avatar" src="./monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
+          <p class="lemma-secondary">“BIENVENIDOS A LOS M, UNANSE A LOS M”</p>
+        </aside>
+      </div>
 
-/* ===========================
-   Typewriter del lema
-   =========================== */
-(function typewriter() {
-  const el = $("#typewriter");
-  if (!el) return;
-  const text = el.textContent.trim() || "“BIENVENIDOS A LOS M, UNANSE A LOS M”";
-  el.textContent = "";
-  let i = 0;
-  (function step(){
-    el.textContent = text.slice(0, i++);
-    if (i <= text.length) setTimeout(step, 28);
-  })();
-})();
+      <!-- Temáticas -->
+      <div class="container features" aria-label="Temáticas">
+        <div class="feature">
+          <span class="icon" aria-hidden="true">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 8h4l2-3h4l2 3h4v11H4zM8 13h8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div><strong>IRL</strong><div class="muted">Salidas y vida diaria</div></div>
+        </div>
+        <div class="feature">
+          <span class="icon" aria-hidden="true">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3v9a3 3 0 1 1-6 0V6" stroke="currentColor" stroke-linecap="round"/><path d="M19 12a7 7 0 0 1-14 0M12 19v2" stroke="currentColor"/></svg>
+          </span>
+          <div><strong>Música</strong><div class="muted">Playlist y reacciones</div></div>
+        </div>
+        <div class="feature">
+          <span class="icon" aria-hidden="true">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V6a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div><strong>Charlas</strong><div class="muted">Comunidad “Los M”</div></div>
+        </div>
+        <div class="feature">
+          <span class="icon" aria-hidden="true">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M7 12h4M13 12h4M6 18l-2-2m16 2-2-2M8 6l2 2m4-2-2 2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div><strong>Gaming</strong><div class="muted">Among Us & más</div></div>
+        </div>
+      </div>
+    </section>
 
-/* ===========================
-   Schema.org Person
-   =========================== */
-(function schemaPerson() {
-  const el = $("#schema-person");
-  if (!el) return;
-  const data = {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "name": "MontanaFrx",
-    "url": location.origin,
-    "sameAs": [
-      "https://kick.com/montanafrx",
-      "https://www.instagram.com/montanafrx",
-      "https://www.tiktok.com/@kick.montanafrx",
-      "https://x.com/Montanafrx",
-      "https://discord.gg/sxcJVwzK8Z"
-    ]
-  };
-  el.textContent = JSON.stringify(data);
-})();
+    <!-- REDES -->
+    <section id="redes" class="section" aria-labelledby="redes-title">
+      <div class="container">
+        <h2 id="redes-title">Redes sociales</h2>
+        <div class="socials">
+          <a class="social" href="https://kick.com/montanafrx" target="_blank" rel="noopener" aria-label="Kick">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 5h7v4h4v10h-4v-4H9v4H5z" stroke="currentColor" stroke-width="2"/></svg> Kick
+          </a>
+          <a class="social" href="https://www.instagram.com/montanafrx?igsh=MXg0N2lhaGZkbXU4eA==" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="2"/></svg> Instagram
+          </a>
+          <a class="social" href="https://www.tiktok.com/@kick.montanafrx" target="_blank" rel="noopener" aria-label="TikTok">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M15 3v6a4 4 0 1 1-4 4" stroke="currentColor" stroke-width="2"/></svg> TikTok
+          </a>
+          <a class="social" href="https://x.com/Montanafrx?t=rWYu6o3qkm0tucrV5BC4kw&s=09" target="_blank" rel="noopener" aria-label="X">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2"/></svg> X/Twitter
+          </a>
+          <a class="social" href="https://discord.gg/sxcJVwzK8Z" target="_blank" rel="noopener" aria-label="Discord">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 19c2-2 10-2 12 0 1-2 2-5 2-8-2-2-4-3-6-3l-1 1-2-1c-2 0-4 1-6 3 0 3 1 6 2 8z" stroke="currentColor" stroke-width="2"/></svg> Discord
+          </a>
+        </div>
+      </div>
+    </section>
 
-/* ===========================
-   Formulario de contacto
-   =========================== */
-(function contactForm() {
-  const form = $("#contact-form");
-  if (!form) return;
-  const helper = $("#form-helper");
+    <!-- SOBRE MÍ -->
+    <section id="sobre-mi" class="section" aria-labelledby="sobre-mi-title">
+      <div class="container about-grid">
+        <div>
+          <h2 id="sobre-mi-title">Sobre mí</h2>
+          <p class="lead">Streamer ecuatoriano de IRL y setup. Charlas, música y partidas de Among Us. <strong>¡Únete a los M!</strong></p>
+        </div>
+        <div class="about-card">
+          <p>En este canal encontrarás streams relajados, interacción directa con la comunidad y buen humor. Me gusta explorar la ciudad en IRL, reaccionar a música nueva y jugar con ustedes.</p>
+          <ul class="about-list">
+            <li>💬 Charlas y temas de actualidad</li>
+            <li>🎵 Reacciones y playlists</li>
+            <li>🎮 Partidas con la comunidad</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = $("#name")?.value?.trim() ?? "";
-    const email = $("#email")?.value?.trim() ?? "";
-    const message = $("#message")?.value?.trim() ?? "";
+    <!-- HORARIOS -->
+    <section id="horarios" class="section" aria-labelledby="horarios-title">
+      <div class="container">
+        <h2 id="horarios-title">Horarios de streaming</h2>
+        <p class="lead">Zona horaria: <strong>UTC-5 (Ecuador)</strong>. Si coincide ahora, verás <span class="badge-live">En directo ahora</span>.</p>
+        <div class="table-wrap">
+          <table class="schedule" aria-describedby="horarios-title">
+            <thead>
+              <tr><th>Día</th><th>Horario</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="schedule-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (name.length < 2) { helper.textContent = "El nombre debe tener al menos 2 caracteres."; return; }
-    if (!emailOk)       { helper.textContent = "Ingresa un email válido."; return; }
-    if (message.length < 10) { helper.textContent = "El mensaje debe tener al menos 10 caracteres."; return; }
+    <!-- CLIPS (en la nube) -->
+    <section id="clips" class="section" aria-labelledby="clips-title">
+      <div class="container">
+        <div class="clips-header">
+          <div>
+            <h2 id="clips-title">Clips destacados</h2>
+            <p class="lead">Los clips se guardan en la nube. Máximo 6. Usa URL (Kick/YouTube) o sube un video.</p>
+          </div>
+          <button id="addClipBtn" class="btn glow" type="button" aria-haspopup="dialog">+ Agregar clip</button>
+        </div>
 
-    helper.textContent = "";
-    form.reset();
-    showToast("Mensaje enviado ✔");
-  });
-})();
+        <!-- Contenedor (máx 6) -->
+        <div id="clipsContainer" class="clip-grid" role="list"></div>
+      </div>
+    </section>
 
-/* ===========================
-   Horarios (UTC-5, cruce medianoche)
-   L-M-Mi-J-V-D: 21:45–01:00, Sábado: descanso
-   =========================== */
-(function schedule() {
-  const tbody = $("#schedule-body");
-  if (!tbody) return;
+    <!-- MODAL Clips (Agregar/Editar) -->
+    <div id="clipModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="clipModalTitle">
+      <div class="modal__content">
+        <div class="modal__header">
+          <h3 id="clipModalTitle">Agregar clip</h3>
+          <button id="closeClipModal" class="icon-btn" aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
 
-  const TZ = "America/Guayaquil";
-  const days = ["domingo", "lunes", "miércoles","martes", "jueves", "viernes", "sábado"]; // <- ojo: corrige al tuyo si cambias
-  // Mejor mantener orden normal:
-  const dayNames = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+        <form id="clipForm" class="modal__form">
+          <input type="hidden" id="clipId" />
 
-  const rules = {
-    0: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // domingo
-    1: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // lunes
-    2: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // martes
-    3: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // miércoles
-    4: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // jueves
-    5: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // viernes
-    6: { start: null, end: null, off: true }                           // sábado
-  };
+          <label for="clipTitle">Título del clip</label>
+          <input id="clipTitle" class="input" type="text" name="title" minlength="2" required />
 
-  const mins = (h, m) => h * 60 + m;
+          <label for="clipUrl">URL (Kick/YouTube) — opcional si subes archivo</label>
+          <input id="clipUrl" class="input" type="url" name="url" placeholder="https://..." />
 
-  function nowTZ() {
-    const fmt = new Intl.DateTimeFormat("es-EC", {
-      timeZone: TZ, hour12: false,
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", second: "2-digit",
-      weekday: "long"
-    });
-    const parts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
-    const dow = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]
-      .indexOf(parts.weekday.toLowerCase());
-    return { h:+parts.hour, m:+parts.minute, dow };
-  }
+          <div class="file-row">
+            <label for="clipFile">O subir archivo de video (se alojará en la nube)</label>
+            <input id="clipFile" type="file" accept="video/*" />
+            <div id="clipPreview" class="preview" aria-live="polite"></div>
+          </div>
 
-  function isLiveForDay(dayIndex, now) {
-    const rule = rules[dayIndex];
-    if (!rule || rule.off) return false;
-    const s = mins(rule.start.h, rule.start.m);
-    const e = mins(rule.end.h, rule.end.m);
-    const n = mins(now.h, now.m);
-    if (e <= s) { // cruza medianoche
-      if (n >= s) return true; // noche del mismo día
-      const prev = (dayIndex + 6) % 7;
-      const pr = rules[prev];
-      if (pr && !pr.off) {
-        const pe = mins(pr.end.h, pr.end.m);
-        const ps = mins(pr.start.h, pr.start.m);
-        if (pe <= ps && n < e) return true;
-      }
-      return false;
-    } else {
-      return n >= s && n < e;
-    }
-  }
+          <div class="modal__actions">
+            <button type="submit" class="btn primary">Guardar</button>
+            <button type="button" id="cancelClip" class="btn">Cancelar</button>
+          </div>
 
-  const fmt = (h, m=0) => `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+          <p class="muted" style="margin:6px 0 0">
+            Nota: los archivos locales se subirán a la nube para que todos puedan verlos.
+          </p>
+        </form>
+      </div>
+    </div>
 
-  function render() {
-    const now = nowTZ();
-    tbody.innerHTML = "";
-    for (let i = 0; i < 7; i++) {
-      const rule = rules[i];
-      const tr = document.createElement("tr");
+    <!-- CONTACTO -->
+    <section id="contacto" class="section" aria-labelledby="contacto-title">
+      <div class="container">
+        <h2 id="contacto-title">Contacto</h2>
+        <form id="contact-form" class="form" novalidate>
+          <div class="form-row">
+            <label for="name">Nombre</label>
+            <input id="name" class="input" name="name" type="text" minlength="2" required />
+          </div>
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input id="email" class="input" name="email" type="email" required />
+          </div>
+          <div class="form-row">
+            <label for="message">Mensaje</label>
+            <textarea id="message" class="textarea" name="message" rows="4" minlength="10" required></textarea>
+          </div>
+          <div class="helper" id="form-helper" role="status" aria-live="polite"></div>
+          <button class="btn glow" type="submit">Enviar</button>
+        </form>
+      </div>
+    </section>
+  </main>
 
-      const tdDay = document.createElement("td");
-      const name = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][i];
-      tdDay.textContent = name[0].toUpperCase() + name.slice(1);
+  <footer class="site-footer" role="contentinfo">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> MontanaFrx · Sitio fan/brand personal.</p>
+      <nav aria-label="Secundario">
+        <a href="#inicio" class="muted link">Inicio</a> ·
+        <a href="#redes" class="muted link">Redes</a>
+      </nav>
+    </div>
+  </footer>
 
-      const tdTime = document.createElement("td");
-      tdTime.textContent = rule.off ? "Descanso" : `${fmt(rule.start.h, rule.start.m)} - ${fmt(rule.end.h, rule.end.m)}`;
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite">Mensaje enviado ✔</div>
 
-      const tdState = document.createElement("td");
-      let live = false;
-      if (!rule.off) {
-        if (i === now.dow) {
-          live = isLiveForDay(i, now);
-        } else if (i === (now.dow + 6) % 7) {
-          const curr = rules[now.dow];
-          if (curr && !curr.off) {
-            const ce = mins(curr.end.h, curr.end.m);
-            const cs = mins(curr.start.h, curr.start.m);
-            const n  = mins(now.h, now.m);
-            if (ce <= cs && n < ce) live = true;
-          }
-        }
-      }
-      tdState.innerHTML = live ? `<span class="badge-live">En directo ahora</span>` : "—";
-      if (live) tr.classList.add("active");
+  <!-- Schema.org Person -->
+  <script type="application/ld+json" id="schema-person"></script>
 
-      tr.append(tdDay, tdTime, tdState);
-      tbody.appendChild(tr);
-    }
-  }
-
-  render();
-  setInterval(render, 60 * 1000);
-})();
-
-/* ===========================
-   Año dinámico
-   =========================== */
-(function year() {
-  const y = $("#year");
-  if (y) y.textContent = new Date().getFullYear();
-})();
+  <!-- Scripts como módulos (necesario para que cargue la lógica de horarios y clips) -->
+  <script type="module" src="./funciones.js"></script>
+  <script type="module" src="./clips.js"></script>
+</body>
+</html>
