@@ -1,12 +1,12 @@
 /* ===========================
-   clips.js — CRUD Clips (Firebase) + Límite 6 + Tiempo real
-   Compatible con IDs de tu index.html actual
+   clips.js — CRUD Clips (Firebase)
+   Límite 6 + Tiempo real + Miniatura YouTube + Modal robusto
    =========================== */
 
 import { db, storage, showToast, setCloudStatus, MAX_CLIPS, $, $$ } from "./funciones.js";
 import {
   collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc,
-  getDocs, query, orderBy, serverTimestamp
+  query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   ref, uploadBytes, getDownloadURL, deleteObject
@@ -35,16 +35,40 @@ let state = {
   editingId: null,
   currentCount: 0,
   previewBlobUrl: null,
-  // cache del snapshot actual para conocer storagePath previo al editar
-  cache: new Map(), // id -> data
+  cache: new Map(), // id -> data (para conocer storagePath previo)
 };
 
-/* ---------- Utilidades UI ---------- */
+/* ---------- Helpers ---------- */
 function btnAddSetDisabled(disabled) {
   if (!els.addBtn) return;
   els.addBtn.disabled = disabled;
   els.addBtn.classList.toggle("is-disabled", !!disabled);
   els.grid?.classList.toggle("max-reached", !!disabled);
+}
+
+function isDirectVideo(url = "") {
+  return (
+    /\.(mp4|webm|ogg)(\?.*)?$/i.test(url) ||
+    url.startsWith("https://firebasestorage.googleapis.com/")
+  );
+}
+
+/** Devuelve miniatura si es YouTube (hqdefault), o null si no se reconoce */
+function getYoutubeThumb(url = "") {
+  try {
+    const u = new URL(url);
+    // youtu.be/ID
+    if (u.hostname.includes("youtu.be")) {
+      const id = u.pathname.replace("/", "");
+      return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+    }
+    // youtube.com/watch?v=ID
+    if (u.hostname.includes("youtube.com")) {
+      const id = u.searchParams.get("v");
+      return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+    }
+  } catch (_) {}
+  return null;
 }
 
 function openModal(mode = "add", data = null) {
@@ -66,16 +90,13 @@ function openModal(mode = "add", data = null) {
     els.fieldTitle.value = data.title || "";
     els.fieldUrl.value = data.url || "";
 
-    // Previsualiza si es un video reproducible directo
-    if (data.url) {
-      const isVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(data.url) || data.url.startsWith("https://firebasestorage.googleapis.com/");
-      if (isVideo) {
-        const vid = document.createElement("video");
-        vid.controls = true;
-        vid.src = data.url;
-        vid.style.width = "100%";
-        els.preview.appendChild(vid);
-      }
+    // Vista previa si es un video directo
+    if (isDirectVideo(data.url)) {
+      const vid = document.createElement("video");
+      vid.controls = true;
+      vid.src = data.url;
+      vid.style.width = "100%";
+      els.preview.appendChild(vid);
     }
   }
 
@@ -95,8 +116,6 @@ function renderClips(docs) {
   docs.forEach((snap) => {
     const data = snap.data();
     const id = snap.id;
-
-    // cache para edición y borrado
     state.cache.set(id, data);
 
     const card = document.createElement("article");
@@ -105,37 +124,47 @@ function renderClips(docs) {
 
     // THUMB
     const thumbWrap = document.createElement("div");
+    thumbWrap.className = "thumb";
+
     if (data.url) {
-      const isVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(data.url) || data.url.startsWith("https://firebasestorage.googleapis.com/");
-      if (isVideo) {
+      if (isDirectVideo(data.url)) {
         const vid = document.createElement("video");
         vid.className = "thumb";
         vid.src = data.url;
         vid.muted = true;
         vid.playsInline = true;
         vid.controls = true;
-        thumbWrap.appendChild(vid);
+        thumbWrap.replaceWith(vid); // usar <video> como thumb
       } else {
-        const ph = document.createElement("div");
-        ph.className = "thumb";
-        ph.style.display = "grid";
-        ph.style.placeItems = "center";
-        ph.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
-        ph.style.color = "var(--muted)";
-        ph.style.fontWeight = "600";
-        ph.textContent = "Clip (enlace)";
-        thumbWrap.appendChild(ph);
+        // Miniatura de YouTube si aplica
+        const yt = getYoutubeThumb(data.url);
+        if (yt) {
+          const img = document.createElement("img");
+          img.className = "thumb";
+          img.src = yt;
+          img.alt = "Miniatura del clip";
+          grid.appendChild(card);
+          card.append(img);
+        } else {
+          // Placeholder para enlaces no reconocidos
+          thumbWrap.style.display = "grid";
+          thumbWrap.style.placeItems = "center";
+          thumbWrap.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
+          thumbWrap.style.color = "var(--muted)";
+          thumbWrap.style.fontWeight = "600";
+          thumbWrap.textContent = "Clip (enlace)";
+          card.append(thumbWrap);
+        }
       }
     } else {
-      const ph = document.createElement("div");
-      ph.className = "thumb";
-      ph.style.display = "grid";
-      ph.style.placeItems = "center";
-      ph.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
-      ph.style.color = "var(--muted)";
-      ph.style.fontWeight = "600";
-      ph.textContent = "Clip";
-      thumbWrap.appendChild(ph);
+      // Sin URL: placeholder
+      thumbWrap.style.display = "grid";
+      thumbWrap.style.placeItems = "center";
+      thumbWrap.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
+      thumbWrap.style.color = "var(--muted)";
+      thumbWrap.style.fontWeight = "600";
+      thumbWrap.textContent = "Clip";
+      card.append(thumbWrap);
     }
 
     // BODY
@@ -149,7 +178,7 @@ function renderClips(docs) {
     const actions = document.createElement("div");
     actions.className = "card-actions";
 
-    // Ver (abre en nueva pestaña para enlaces)
+    // Ver (si hay url, abre nueva pestaña)
     const btnView = document.createElement("a");
     btnView.className = "btn";
     btnView.textContent = "Ver clip";
@@ -165,7 +194,8 @@ function renderClips(docs) {
     btnEdit.setAttribute("aria-label", "Editar clip");
     btnEdit.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4 20h4l10-10a2.5 2.5 0 0 0-4-4L4 16v4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+        <path d="M4 20h4l10-10a2.5 2.5 0 0 0-4-4L4 16v4z"
+              stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
       </svg>`;
     btnEdit.addEventListener("click", () => openModal("edit", { id, ...data }));
     actions.appendChild(btnEdit);
@@ -177,12 +207,12 @@ function renderClips(docs) {
     btnDel.setAttribute("aria-label", "Eliminar clip");
     btnDel.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M3 6h18M8 6l1-2h6l1 2m-1 0v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+        <path d="M3 6h18M8 6l1-2h6l1 2m-1 0v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
       </svg>`;
     btnDel.addEventListener("click", async () => {
       if (!confirm("¿Seguro que deseas eliminar este clip?")) return;
       try {
-        // Borrar archivo del Storage si existe
         if (data.storagePath) {
           try { await deleteObject(ref(storage, data.storagePath)); } catch (e) { console.warn("No se pudo borrar de Storage:", e); }
         }
@@ -190,28 +220,24 @@ function renderClips(docs) {
         showToast("Clip eliminado");
       } catch (e) {
         console.error(e);
-        showToast("Error al eliminar el clip");
+        showToast("Error al eliminar el clip: " + (e?.message || e));
       }
     });
     actions.appendChild(btnDel);
 
     body.append(title, actions);
-    card.append(thumbWrap, body);
+    card.append(body);
     grid.appendChild(card);
   });
 }
 
-/* ---------- Snapshot en tiempo real + límite ---------- */
+/* ---------- Tiempo real + límite ---------- */
 const qClips = query(clipsRef, orderBy("createdAt", "desc"));
 onSnapshot(qClips, (snapshot) => {
   const docs = snapshot.docs;
   state.currentCount = docs.length;
 
-  // Límite y UI
-  const reached = state.currentCount >= MAX_CLIPS;
-  btnAddSetDisabled(reached);
-
-  // Render
+  btnAddSetDisabled(state.currentCount >= MAX_CLIPS);
   renderClips(docs);
 }, (err) => {
   console.error("onSnapshot error:", err);
@@ -229,7 +255,6 @@ els.addBtn?.addEventListener("click", () => {
 
 els.closeBtn?.addEventListener("click", closeModal);
 els.cancelBtn?.addEventListener("click", closeModal);
-// Cerrar al click fuera del contenido
 els.modal?.addEventListener("click", (e) => {
   if (e.target === els.modal) closeModal();
 });
@@ -271,38 +296,33 @@ els.form?.addEventListener("submit", async (e) => {
   }
 
   setCloudStatus("Guardando clip…");
-
-  // Subida a Storage si hay archivo
   let storagePath = null;
-  if (file) {
-    try {
+  let savedOk = false;
+
+  try {
+    // Si hay archivo, sube a Storage y usa esa URL
+    if (file) {
       storagePath = `clips/${Date.now()}_${file.name}`;
       const storageRef = ref(storage, storagePath);
       await uploadBytes(storageRef, file);
       url = await getDownloadURL(storageRef);
-    } catch (err) {
-      console.error(err);
-      showToast("Error al subir el archivo");
-      setCloudStatus("Error", "error");
-      return;
     }
-  }
 
-  try {
     if (state.editingId) {
       const id = state.editingId;
       const prev = state.cache.get(id) || {};
 
-      // Si reemplazamos por un nuevo archivo, borra el anterior del Storage
+      // Si subimos archivo nuevo, borra el anterior del Storage
       if (storagePath && prev.storagePath && prev.storagePath !== storagePath) {
         try { await deleteObject(ref(storage, prev.storagePath)); } catch (e) { console.warn("No se pudo borrar previo:", e); }
       }
 
       const payload = { title };
-      if (typeof url === "string" && url.length) payload.url = url;
+      if (typeof url === "string") payload.url = url;
       if (storagePath) payload.storagePath = storagePath;
 
       await updateDoc(doc(db, "clips", id), payload);
+      savedOk = true;
       showToast("Clip actualizado");
     } else {
       await addDoc(clipsRef, {
@@ -311,14 +331,24 @@ els.form?.addEventListener("submit", async (e) => {
         storagePath: storagePath || null,
         createdAt: serverTimestamp()
       });
+      savedOk = true;
       showToast("Clip agregado");
     }
-
-    closeModal();
-    setCloudStatus("Listo");
   } catch (err) {
     console.error(err);
-    showToast("Error al guardar el clip");
+    showToast("Error al guardar el clip: " + (err?.message || err));
     setCloudStatus("Error", "error");
+  } finally {
+    setCloudStatus("Listo");
+    if (savedOk) {
+      // limpia preview y cierra modal
+      els.form.reset();
+      els.preview.innerHTML = "";
+      if (state.previewBlobUrl) {
+        try { URL.revokeObjectURL(state.previewBlobUrl); } catch {}
+        state.previewBlobUrl = null;
+      }
+      closeModal();
+    }
   }
 });
