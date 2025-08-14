@@ -1,278 +1,324 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+/* ===========================
+   clips.js — CRUD Clips (Firebase) + Límite 6 + Tiempo real
+   Compatible con IDs de tu index.html actual
+   =========================== */
 
-  <title>MontanaFrx — Streamer IRL y Setup</title>
-  <meta name="description" content="Streamer ecuatoriano de IRL y setup. Charlas, música y partidas de Among Us. ¡Únete a los M!" />
-  <meta name="theme-color" content="#0B0B0B" />
+import { db, storage, showToast, setCloudStatus, MAX_CLIPS, $, $$ } from "./funciones.js";
+import {
+  collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc,
+  getDocs, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  ref, uploadBytes, getDownloadURL, deleteObject
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="MontanaFrx — Streamer IRL y Setup" />
-  <meta property="og:description" content="Charlas, música y Among Us. ¡Únete a los M!" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://kick.com/montanafrx" />
-  <meta property="og:image" content="monta.jpeg" />
+/* ---------- Elementos del DOM (IDs EXACTOS del HTML) ---------- */
+const els = {
+  grid: document.getElementById("clipsContainer"),
+  addBtn: document.getElementById("addClipBtn"),
+  modal: document.getElementById("clipModal"),
+  modalTitle: document.getElementById("clipModalTitle"),
+  closeBtn: document.getElementById("closeClipModal"),
+  cancelBtn: document.getElementById("cancelClip"),
+  form: document.getElementById("clipForm"),
+  fieldId: document.getElementById("clipId"),
+  fieldTitle: document.getElementById("clipTitle"),
+  fieldUrl: document.getElementById("clipUrl"),
+  fieldFile: document.getElementById("clipFile"),
+  preview: document.getElementById("clipPreview"),
+};
 
-  <!-- Favicon (SVG data URI) -->
-  <link rel="icon" href="data:image/svg+xml;utf8,
-  %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E
-  %3Crect width='64' height='64' rx='14' fill='%230B0B0B'/%3E
-  %3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E
-  %3C/svg%3E" />
+const clipsRef = collection(db, "clips");
 
-  <!-- Fuentes -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+/* ---------- Estado ---------- */
+let state = {
+  editingId: null,
+  currentCount: 0,
+  previewBlobUrl: null,
+  // cache del snapshot actual para conocer storagePath previo al editar
+  cache: new Map(), // id -> data
+};
 
-  <!-- Estilos -->
-  <link rel="stylesheet" href="./Estilo.css" />
-</head>
-<body>
-  <a class="skip-link" href="#main">Saltar al contenido</a>
+/* ---------- Utilidades UI ---------- */
+function btnAddSetDisabled(disabled) {
+  if (!els.addBtn) return;
+  els.addBtn.disabled = disabled;
+  els.addBtn.classList.toggle("is-disabled", !!disabled);
+  els.grid?.classList.toggle("max-reached", !!disabled);
+}
 
-  <!-- Banner de estado de nube (lo actualiza funciones.js) -->
-  <div id="cloud-status" class="muted" style="font-size:.9rem;text-align:center;padding:6px 10px;border-bottom:1px solid var(--border);background:#0f1115;">
-    Conectando a la nube…
-  </div>
+function openModal(mode = "add", data = null) {
+  els.modal.classList.remove("hidden");
+  els.modal.setAttribute("aria-hidden", "false");
+  els.modalTitle.textContent = mode === "edit" ? "Editar clip" : "Agregar clip";
+  els.form.reset();
+  els.preview.innerHTML = "";
+  if (state.previewBlobUrl) {
+    try { URL.revokeObjectURL(state.previewBlobUrl); } catch {}
+    state.previewBlobUrl = null;
+  }
+  state.editingId = null;
+  els.fieldId.value = "";
 
-  <!-- Header / Navbar -->
-  <header class="site-header" role="banner">
-    <div class="container header-inner">
-      <a href="#inicio" class="brand" aria-label="Ir a inicio">
-        <span class="logo">⚡</span>
-        <span class="brand-text">MontanaFrx</span>
-      </a>
+  if (data) {
+    state.editingId = data.id;
+    els.fieldId.value = data.id;
+    els.fieldTitle.value = data.title || "";
+    els.fieldUrl.value = data.url || "";
 
-      <nav class="main-nav" aria-label="Navegación principal">
-        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú">
-          <span class="nav-bars"></span>
-        </button>
-        <ul id="nav-menu" class="nav-list">
-          <li><a href="#inicio">Inicio</a></li>
-          <li><a href="#redes">Redes</a></li>
-          <li><a href="#sobre-mi">Sobre mí</a></li>
-          <li><a href="#horarios">Horarios</a></li>
-          <li><a href="#clips">Clips</a></li>
-          <li><a href="#contacto">Contacto</a></li>
-        </ul>
-      </nav>
+    // Previsualiza si es un video reproducible directo
+    if (data.url) {
+      const isVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(data.url) || data.url.startsWith("https://firebasestorage.googleapis.com/");
+      if (isVideo) {
+        const vid = document.createElement("video");
+        vid.controls = true;
+        vid.src = data.url;
+        vid.style.width = "100%";
+        els.preview.appendChild(vid);
+      }
+    }
+  }
 
-      <div class="header-ctas">
-        <a class="btn glow" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en Kick</a>
-      </div>
-    </div>
-  </header>
+  els.fieldTitle.focus();
+}
 
-  <main id="main">
-    <!-- HERO -->
-    <section id="inicio" class="hero" aria-label="Inicio">
-      <div class="container hero-inner">
-        <div>
-          <p class="kicker">Streamer · IRL · Setup</p>
-          <h1>MontanaFrx</h1>
-          <p class="hero-desc">Streamer IRL y de setup: charlas, música y partidas de <em>Among Us</em>. Comunidad chill, vibes y risas.</p>
-          <div class="hero-actions">
-            <a class="btn primary glow" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en vivo en Kick</a>
-            <a class="btn glow" href="https://discord.gg/sxcJVwzK8Z" target="_blank" rel="noopener">Unirse al Discord</a>
-          </div>
+function closeModal() {
+  els.modal.classList.add("hidden");
+  els.modal.setAttribute("aria-hidden", "true");
+}
 
-          <!-- Lema (se baja con CSS .lema-wrap; ya lo usas a 54px) -->
-          <div class="hero-card lema-wrap" style="margin-top:54px">
-            <div class="lema"><span id="typewriter" class="typewriter">“BIENVENIDOS A LOS M, UNANSE A LOS M”</span></div>
-          </div>
-        </div>
+/* ---------- Render ---------- */
+function renderClips(docs) {
+  const grid = els.grid;
+  grid.innerHTML = "";
 
-        <aside class="hero-card hero-media">
-          <img id="avatar" class="avatar" src="./monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
-          <p class="lemma-secondary">“BIENVENIDOS A LOS M, UNANSE A LOS M”</p>
-        </aside>
-      </div>
+  docs.forEach((snap) => {
+    const data = snap.data();
+    const id = snap.id;
 
-      <!-- Temáticas -->
-      <div class="container features" aria-label="Temáticas">
-        <div class="feature">
-          <span class="icon" aria-hidden="true">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 8h4l2-3h4l2 3h4v11H4zM8 13h8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <div><strong>IRL</strong><div class="muted">Salidas y vida diaria</div></div>
-        </div>
-        <div class="feature">
-          <span class="icon" aria-hidden="true">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3v9a3 3 0 1 1-6 0V6" stroke="currentColor" stroke-linecap="round"/><path d="M19 12a7 7 0 0 1-14 0M12 19v2" stroke="currentColor"/></svg>
-          </span>
-          <div><strong>Música</strong><div class="muted">Playlist y reacciones</div></div>
-        </div>
-        <div class="feature">
-          <span class="icon" aria-hidden="true">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V6a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <div><strong>Charlas</strong><div class="muted">Comunidad “Los M”</div></div>
-        </div>
-        <div class="feature">
-          <span class="icon" aria-hidden="true">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M7 12h4M13 12h4M6 18l-2-2m16 2-2-2M8 6l2 2m4-2-2 2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <div><strong>Gaming</strong><div class="muted">Among Us & más</div></div>
-        </div>
-      </div>
-    </section>
+    // cache para edición y borrado
+    state.cache.set(id, data);
 
-    <!-- REDES -->
-    <section id="redes" class="section" aria-labelledby="redes-title">
-      <div class="container">
-        <h2 id="redes-title">Redes sociales</h2>
-        <div class="socials">
-          <a class="social" href="https://kick.com/montanafrx" target="_blank" rel="noopener" aria-label="Kick">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M5 5h7v4h4v10h-4v-4H9v4H5z" stroke="currentColor" stroke-width="2"/></svg> Kick
-          </a>
-          <a class="social" href="https://www.instagram.com/montanafrx?igsh=MXg0N2lhaGZkbXU4eA==" target="_blank" rel="noopener" aria-label="Instagram">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="2"/></svg> Instagram
-          </a>
-          <a class="social" href="https://www.tiktok.com/@kick.montanafrx" target="_blank" rel="noopener" aria-label="TikTok">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M15 3v6a4 4 0 1 1-4 4" stroke="currentColor" stroke-width="2"/></svg> TikTok
-          </a>
-          <a class="social" href="https://x.com/Montanafrx?t=rWYu6o3qkm0tucrV5BC4kw&s=09" target="_blank" rel="noopener" aria-label="X">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2"/></svg> X/Twitter
-          </a>
-          <a class="social" href="https://discord.gg/sxcJVwzK8Z" target="_blank" rel="noopener" aria-label="Discord">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M6 19c2-2 10-2 12 0 1-2 2-5 2-8-2-2-4-3-6-3l-1 1-2-1c-2 0-4 1-6 3 0 3 1 6 2 8z" stroke="currentColor" stroke-width="2"/></svg> Discord
-          </a>
-        </div>
-      </div>
-    </section>
+    const card = document.createElement("article");
+    card.className = "card";
+    card.setAttribute("role", "listitem");
 
-    <!-- SOBRE MÍ -->
-    <section id="sobre-mi" class="section" aria-labelledby="sobre-mi-title">
-      <div class="container about-grid">
-        <div>
-          <h2 id="sobre-mi-title">Sobre mí</h2>
-          <p class="lead">Streamer ecuatoriano de IRL y setup. Charlas, música y partidas de Among Us. <strong>¡Únete a los M!</strong></p>
-        </div>
-        <div class="about-card">
-          <p>En este canal encontrarás streams relajados, interacción directa con la comunidad y buen humor. Me gusta explorar la ciudad en IRL, reaccionar a música nueva y jugar con ustedes.</p>
-          <ul class="about-list">
-            <li>💬 Charlas y temas de actualidad</li>
-            <li>🎵 Reacciones y playlists</li>
-            <li>🎮 Partidas con la comunidad</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+    // THUMB
+    const thumbWrap = document.createElement("div");
+    if (data.url) {
+      const isVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(data.url) || data.url.startsWith("https://firebasestorage.googleapis.com/");
+      if (isVideo) {
+        const vid = document.createElement("video");
+        vid.className = "thumb";
+        vid.src = data.url;
+        vid.muted = true;
+        vid.playsInline = true;
+        vid.controls = true;
+        thumbWrap.appendChild(vid);
+      } else {
+        const ph = document.createElement("div");
+        ph.className = "thumb";
+        ph.style.display = "grid";
+        ph.style.placeItems = "center";
+        ph.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
+        ph.style.color = "var(--muted)";
+        ph.style.fontWeight = "600";
+        ph.textContent = "Clip (enlace)";
+        thumbWrap.appendChild(ph);
+      }
+    } else {
+      const ph = document.createElement("div");
+      ph.className = "thumb";
+      ph.style.display = "grid";
+      ph.style.placeItems = "center";
+      ph.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
+      ph.style.color = "var(--muted)";
+      ph.style.fontWeight = "600";
+      ph.textContent = "Clip";
+      thumbWrap.appendChild(ph);
+    }
 
-    <!-- HORARIOS -->
-    <section id="horarios" class="section" aria-labelledby="horarios-title">
-      <div class="container">
-        <h2 id="horarios-title">Horarios de streaming</h2>
-        <p class="lead">Zona horaria: <strong>UTC-5 (Ecuador)</strong>. Si coincide ahora, verás <span class="badge-live">En directo ahora</span>.</p>
-        <div class="table-wrap">
-          <table class="schedule" aria-describedby="horarios-title">
-            <thead>
-              <tr><th>Día</th><th>Horario</th><th>Estado</th></tr>
-            </thead>
-            <tbody id="schedule-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+    // BODY
+    const body = document.createElement("div");
+    body.className = "card-body";
 
-    <!-- CLIPS (en la nube) -->
-    <section id="clips" class="section" aria-labelledby="clips-title">
-      <div class="container">
-        <div class="clips-header">
-          <div>
-            <h2 id="clips-title">Clips destacados</h2>
-            <p class="lead">Los clips se guardan en la nube. Máximo 6. Usa URL (Kick/YouTube) o sube un video.</p>
-          </div>
-          <button id="addClipBtn" class="btn glow" type="button" aria-haspopup="dialog">+ Agregar clip</button>
-        </div>
+    const title = document.createElement("h3");
+    title.className = "card-title";
+    title.textContent = data.title || "Clip";
 
-        <!-- Contenedor (máx 6) -->
-        <div id="clipsContainer" class="clip-grid" role="list"></div>
-      </div>
-    </section>
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
 
-    <!-- MODAL Clips (Agregar/Editar) -->
-    <div id="clipModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="clipModalTitle">
-      <div class="modal__content">
-        <div class="modal__header">
-          <h3 id="clipModalTitle">Agregar clip</h3>
-          <button id="closeClipModal" class="icon-btn" aria-label="Cerrar">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2"/></svg>
-          </button>
-        </div>
+    // Ver (abre en nueva pestaña para enlaces)
+    const btnView = document.createElement("a");
+    btnView.className = "btn";
+    btnView.textContent = "Ver clip";
+    btnView.target = "_blank";
+    btnView.rel = "noopener";
+    btnView.href = data.url || "#";
+    actions.appendChild(btnView);
 
-        <form id="clipForm" class="modal__form">
-          <input type="hidden" id="clipId" />
+    // Editar
+    const btnEdit = document.createElement("button");
+    btnEdit.className = "icon-btn";
+    btnEdit.title = "Editar";
+    btnEdit.setAttribute("aria-label", "Editar clip");
+    btnEdit.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 20h4l10-10a2.5 2.5 0 0 0-4-4L4 16v4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+      </svg>`;
+    btnEdit.addEventListener("click", () => openModal("edit", { id, ...data }));
+    actions.appendChild(btnEdit);
 
-          <label for="clipTitle">Título del clip</label>
-          <input id="clipTitle" class="input" type="text" name="title" minlength="2" required />
+    // Eliminar
+    const btnDel = document.createElement("button");
+    btnDel.className = "icon-btn";
+    btnDel.title = "Eliminar";
+    btnDel.setAttribute("aria-label", "Eliminar clip");
+    btnDel.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 6h18M8 6l1-2h6l1 2m-1 0v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      </svg>`;
+    btnDel.addEventListener("click", async () => {
+      if (!confirm("¿Seguro que deseas eliminar este clip?")) return;
+      try {
+        // Borrar archivo del Storage si existe
+        if (data.storagePath) {
+          try { await deleteObject(ref(storage, data.storagePath)); } catch (e) { console.warn("No se pudo borrar de Storage:", e); }
+        }
+        await deleteDoc(doc(db, "clips", id));
+        showToast("Clip eliminado");
+      } catch (e) {
+        console.error(e);
+        showToast("Error al eliminar el clip");
+      }
+    });
+    actions.appendChild(btnDel);
 
-          <label for="clipUrl">URL (Kick/YouTube) — opcional si subes archivo</label>
-          <input id="clipUrl" class="input" type="url" name="url" placeholder="https://..." />
+    body.append(title, actions);
+    card.append(thumbWrap, body);
+    grid.appendChild(card);
+  });
+}
 
-          <div class="file-row">
-            <label for="clipFile">O subir archivo de video (se alojará en la nube)</label>
-            <input id="clipFile" type="file" accept="video/*" />
-            <div id="clipPreview" class="preview" aria-live="polite"></div>
-          </div>
+/* ---------- Snapshot en tiempo real + límite ---------- */
+const qClips = query(clipsRef, orderBy("createdAt", "desc"));
+onSnapshot(qClips, (snapshot) => {
+  const docs = snapshot.docs;
+  state.currentCount = docs.length;
 
-          <div class="modal__actions">
-            <button type="submit" class="btn primary">Guardar</button>
-            <button type="button" id="cancelClip" class="btn">Cancelar</button>
-          </div>
+  // Límite y UI
+  const reached = state.currentCount >= MAX_CLIPS;
+  btnAddSetDisabled(reached);
 
-          <p class="muted" style="margin:6px 0 0">
-            Nota: los archivos locales se subirán a la nube para que todos puedan verlos.
-          </p>
-        </form>
-      </div>
-    </div>
+  // Render
+  renderClips(docs);
+}, (err) => {
+  console.error("onSnapshot error:", err);
+  setCloudStatus("Error de sincronización", "error");
+});
 
-    <!-- CONTACTO -->
-    <section id="contacto" class="section" aria-labelledby="contacto-title">
-      <div class="container">
-        <h2 id="contacto-title">Contacto</h2>
-        <form id="contact-form" class="form" novalidate>
-          <div class="form-row">
-            <label for="name">Nombre</label>
-            <input id="name" class="input" name="name" type="text" minlength="2" required />
-          </div>
-          <div class="form-row">
-            <label for="email">Email</label>
-            <input id="email" class="input" name="email" type="email" required />
-          </div>
-          <div class="form-row">
-            <label for="message">Mensaje</label>
-            <textarea id="message" class="textarea" name="message" rows="4" minlength="10" required></textarea>
-          </div>
-          <div class="helper" id="form-helper" role="status" aria-live="polite"></div>
-          <button class="btn glow" type="submit">Enviar</button>
-        </form>
-      </div>
-    </section>
-  </main>
+/* ---------- Abrir/Cerrar modal ---------- */
+els.addBtn?.addEventListener("click", () => {
+  if (state.currentCount >= MAX_CLIPS) {
+    showToast(`Solo se permiten ${MAX_CLIPS} clips. Elimina uno para agregar otro.`);
+    return;
+  }
+  openModal("add");
+});
 
-  <footer class="site-footer" role="contentinfo">
-    <div class="container footer-inner">
-      <p>© <span id="year"></span> MontanaFrx · Sitio fan/brand personal.</p>
-      <nav aria-label="Secundario">
-        <a href="#inicio" class="muted link">Inicio</a> ·
-        <a href="#redes" class="muted link">Redes</a>
-      </nav>
-    </div>
-  </footer>
+els.closeBtn?.addEventListener("click", closeModal);
+els.cancelBtn?.addEventListener("click", closeModal);
+// Cerrar al click fuera del contenido
+els.modal?.addEventListener("click", (e) => {
+  if (e.target === els.modal) closeModal();
+});
 
-  <!-- Toast -->
-  <div id="toast" class="toast" role="status" aria-live="polite">Mensaje enviado ✔</div>
+/* ---------- Vista previa de archivo local ---------- */
+els.fieldFile?.addEventListener("change", () => {
+  els.preview.innerHTML = "";
+  if (state.previewBlobUrl) {
+    try { URL.revokeObjectURL(state.previewBlobUrl); } catch {}
+    state.previewBlobUrl = null;
+  }
+  const f = els.fieldFile.files?.[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  state.previewBlobUrl = url;
+  const vid = document.createElement("video");
+  vid.controls = true;
+  vid.src = url;
+  vid.style.width = "100%";
+  els.preview.appendChild(vid);
+});
 
-  <!-- Schema.org Person -->
-  <script type="application/ld+json" id="schema-person"></script>
+/* ---------- Guardar (Agregar/Editar) ---------- */
+els.form?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const title = els.fieldTitle.value.trim();
+  let url = els.fieldUrl.value.trim();
+  const file = els.fieldFile.files?.[0];
 
-  <!-- Scripts como módulos (necesario para que cargue la lógica de horarios y clips) -->
-  <script type="module" src="./funciones.js"></script>
-  <script type="module" src="./clips.js"></script>
-</body>
-</html>
+  if (!title) {
+    showToast("El título es obligatorio.");
+    return;
+  }
+
+  // Límite al agregar (no bloquea edición)
+  if (!state.editingId && state.currentCount >= MAX_CLIPS) {
+    showToast(`Solo se permiten ${MAX_CLIPS} clips. Elimina uno para agregar otro.`);
+    return;
+  }
+
+  setCloudStatus("Guardando clip…");
+
+  // Subida a Storage si hay archivo
+  let storagePath = null;
+  if (file) {
+    try {
+      storagePath = `clips/${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, storagePath);
+      await uploadBytes(storageRef, file);
+      url = await getDownloadURL(storageRef);
+    } catch (err) {
+      console.error(err);
+      showToast("Error al subir el archivo");
+      setCloudStatus("Error", "error");
+      return;
+    }
+  }
+
+  try {
+    if (state.editingId) {
+      const id = state.editingId;
+      const prev = state.cache.get(id) || {};
+
+      // Si reemplazamos por un nuevo archivo, borra el anterior del Storage
+      if (storagePath && prev.storagePath && prev.storagePath !== storagePath) {
+        try { await deleteObject(ref(storage, prev.storagePath)); } catch (e) { console.warn("No se pudo borrar previo:", e); }
+      }
+
+      const payload = { title };
+      if (typeof url === "string" && url.length) payload.url = url;
+      if (storagePath) payload.storagePath = storagePath;
+
+      await updateDoc(doc(db, "clips", id), payload);
+      showToast("Clip actualizado");
+    } else {
+      await addDoc(clipsRef, {
+        title,
+        url: url || "",
+        storagePath: storagePath || null,
+        createdAt: serverTimestamp()
+      });
+      showToast("Clip agregado");
+    }
+
+    closeModal();
+    setCloudStatus("Listo");
+  } catch (err) {
+    console.error(err);
+    showToast("Error al guardar el clip");
+    setCloudStatus("Error", "error");
+  }
+});

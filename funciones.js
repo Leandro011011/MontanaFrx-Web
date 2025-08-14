@@ -1,41 +1,47 @@
 /* ===========================
-   funciones.js — UI, accesibilidad, horarios, helpers y Firebase
-   (ES Module: exporta db, storage, showToast, setCloudStatus, MAX_CLIPS, $, $$)
+   funciones.js — UI, accesibilidad, horarios y helpers
    =========================== */
+
+/* ---- Helpers PRIMERO (evita TDZ) ---- */
+export const $  = (sel, ctx = document) => ctx.querySelector(sel);
+export const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
+export function setCloudStatus(text, kind = "info") {
+  // No dependas de $ aquí para evitar TDZ si cambias el orden
+  const el = document.getElementById("cloud-status");
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = kind === "error" ? "#ff6b6b" : "var(--muted)";
+}
+
+export function showToast(message = "Hecho") {
+  const toast = document.getElementById("toast");
+  if (!toast) { alert(message); return; }
+  toast.textContent = message;
+  toast.style.display = "block";
+  toast.setAttribute("aria-live", "polite");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => (toast.style.display = "none"), 2400);
+}
+
+export const MAX_CLIPS = 6;
 
 /* ===========================
-   Firebase (App, Firestore, Storage) - SDK modular
+   Firebase (App, Firestore, Storage)
    =========================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  getStorage,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-/** 🔧 PEGAR TU CONFIGURACIÓN REAL AQUÍ
- *  Copia y pega el objeto que te dio Firebase:
- *  {
- *    apiKey: "...",
- *    authDomain: "...",
- *    projectId: "...",
- *    storageBucket: "...",
- *    messagingSenderId: "...",
- *    appId: "...",
- *    measurementId: "..." // opcional
- *  }
- */
+/** 🔧 REEMPLAZA POR TU CONFIG DE FIREBASE **/
 const firebaseConfig = {
-  apiKey: "AIzaSyC7Fr7q7se_z4ZczzEoIEAQxqo6oQvAK",
-  authDomain: "montanafrxweb.firebaseapp.com",
-  projectId: "montanafrxweb",
-  storageBucket: "montanafrxweb.appspot.com",
-  messagingSenderId: "78301769428",
-  appId: "1:78301769428:web:431b21462215a9c2cffa21",
-  measurementId: "G-06CLX7EX8H"
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROJECT_ID.firebaseapp.com",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_PROJECT_ID.appspot.com",
+  messagingSenderId: "XXXXX",
+  appId: "TU_APP_ID"
 };
-
 
 let app, db, storage;
 try {
@@ -49,61 +55,10 @@ try {
   setCloudStatus("Error al conectar a la nube", "error");
 }
 
-/* ===========================
-   Exportaciones para clips.js
-   =========================== */
 export { db, storage };
 
 /* ===========================
-   Constantes & Helpers globales
-   =========================== */
-export const MAX_CLIPS = 6;
-
-export const $ = (sel, ctx = document) => ctx.querySelector(sel);
-export const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
-
-export function setCloudStatus(text, kind = "info") {
-  const el = $("#cloud-status");
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = kind === "error" ? "#ff6b6b" : "var(--muted)";
-}
-
-/* Toast accesible */
-export function showToast(message = "Hecho") {
-  const toast = $("#toast");
-  if (!toast) {
-    alert(message);
-    return;
-  }
-  toast.textContent = message;
-  toast.style.display = "block";
-  toast.setAttribute("aria-live", "polite");
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => (toast.style.display = "none"), 2400);
-}
-
-/* Throttle & Debounce (utilidades opcionales) */
-export const throttle = (fn, wait = 200) => {
-  let last = 0;
-  return (...args) => {
-    const now = Date.now();
-    if (now - last >= wait) {
-      last = now;
-      fn(...args);
-    }
-  };
-};
-export const debounce = (fn, wait = 200) => {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-};
-
-/* ===========================
-   Navbar móvil accesible + scroll suave
+   Navbar móvil + scroll suave
    =========================== */
 (function navSetup() {
   const btn = $(".nav-toggle");
@@ -122,7 +77,6 @@ export const debounce = (fn, wait = 200) => {
     }
   });
 
-  // Scroll suave en anclas
   $$('a[href^="#"]').forEach(a => {
     a.addEventListener("click", (e) => {
       const id = a.getAttribute("href");
@@ -140,25 +94,17 @@ export const debounce = (fn, wait = 200) => {
 (function typewriter() {
   const el = $("#typewriter");
   if (!el) return;
-  // Si ya hay texto en HTML, lo usamos; si no, lo ponemos:
   const text = el.textContent.trim() || "“BIENVENIDOS A LOS M, UNANSE A LOS M”";
   el.textContent = "";
   let i = 0;
-  function step() {
+  (function step(){
     el.textContent = text.slice(0, i++);
-    if (i <= text.length) {
-      setTimeout(step, 28);
-    } else {
-      // Parpadeo sutil del “cursor”
-      el.style.borderRight = "2px solid transparent";
-      setTimeout(() => (el.style.borderRight = "2px solid var(--accent)"), 500);
-    }
-  }
-  step();
+    if (i <= text.length) setTimeout(step, 28);
+  })();
 })();
 
 /* ===========================
-   Schema.org Person (SEO)
+   Schema.org Person
    =========================== */
 (function schemaPerson() {
   const el = $("#schema-person");
@@ -180,7 +126,7 @@ export const debounce = (fn, wait = 200) => {
 })();
 
 /* ===========================
-   Formulario de contacto (validación accesible)
+   Formulario de contacto
    =========================== */
 (function contactForm() {
   const form = $("#contact-form");
@@ -194,18 +140,10 @@ export const debounce = (fn, wait = 200) => {
     const message = $("#message")?.value?.trim() ?? "";
 
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (name.length < 2) {
-      helper.textContent = "El nombre debe tener al menos 2 caracteres.";
-      return;
-    }
-    if (!emailOk) {
-      helper.textContent = "Ingresa un email válido.";
-      return;
-    }
-    if (message.length < 10) {
-      helper.textContent = "El mensaje debe tener al menos 10 caracteres.";
-      return;
-    }
+    if (name.length < 2) { helper.textContent = "El nombre debe tener al menos 2 caracteres."; return; }
+    if (!emailOk)       { helper.textContent = "Ingresa un email válido."; return; }
+    if (message.length < 10) { helper.textContent = "El mensaje debe tener al menos 10 caracteres."; return; }
+
     helper.textContent = "";
     form.reset();
     showToast("Mensaje enviado ✔");
@@ -213,19 +151,18 @@ export const debounce = (fn, wait = 200) => {
 })();
 
 /* ===========================
-   Horarios (UTC-5 Ecuador) con cruce de medianoche
-   Reglas:
-   - Lunes, Martes, Miércoles, Jueves, Viernes y Domingo: 21:45–01:00
-   - Sábado: Descanso
+   Horarios (UTC-5, cruce medianoche)
+   L-M-Mi-J-V-D: 21:45–01:00, Sábado: descanso
    =========================== */
 (function schedule() {
   const tbody = $("#schedule-body");
   if (!tbody) return;
 
-  const TZ = "America/Guayaquil"; // UTC-5
-  const days = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  const TZ = "America/Guayaquil";
+  const days = ["domingo", "lunes", "miércoles","martes", "jueves", "viernes", "sábado"]; // <- ojo: corrige al tuyo si cambias
+  // Mejor mantener orden normal:
+  const dayNames = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
 
-  // Mapa por índice nativo JS (0 domingo … 6 sábado)
   const rules = {
     0: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // domingo
     1: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // lunes
@@ -233,11 +170,12 @@ export const debounce = (fn, wait = 200) => {
     3: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // miércoles
     4: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // jueves
     5: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // viernes
-    6: { start: null, end: null, off: true }                           // sábado (descanso)
+    6: { start: null, end: null, off: true }                           // sábado
   };
 
+  const mins = (h, m) => h * 60 + m;
+
   function nowTZ() {
-    // Hora/fecha actual en la zona TZ como componentes
     const fmt = new Intl.DateTimeFormat("es-EC", {
       timeZone: TZ, hour12: false,
       year: "numeric", month: "2-digit", day: "2-digit",
@@ -245,88 +183,63 @@ export const debounce = (fn, wait = 200) => {
       weekday: "long"
     });
     const parts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
-    // normaliza índice del día actual
-    const dowName = parts.weekday.toLowerCase();
-    const dow = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"].indexOf(dowName);
-    return {
-      y: +parts.year, mo: +parts.month, d: +parts.day,
-      h: +parts.hour, m: +parts.minute, s: +parts.second,
-      dow
-    };
+    const dow = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]
+      .indexOf(parts.weekday.toLowerCase());
+    return { h:+parts.hour, m:+parts.minute, dow };
   }
 
-  const mins = (h, m) => h * 60 + m;
-
-  // ¿Está “en vivo” para el día N (0..6)?
   function isLiveForDay(dayIndex, now) {
     const rule = rules[dayIndex];
     if (!rule || rule.off) return false;
-
     const s = mins(rule.start.h, rule.start.m);
     const e = mins(rule.end.h, rule.end.m);
     const n = mins(now.h, now.m);
-
-    if (e <= s) {
-      // Cruza medianoche (21:45 → 01:00)
-      if (n >= s) return true; // de 21:45 a 23:59 del mismo día
-      // madrugada del día siguiente: sigue “en vivo” del día anterior hasta 01:00
+    if (e <= s) { // cruza medianoche
+      if (n >= s) return true; // noche del mismo día
       const prev = (dayIndex + 6) % 7;
       const pr = rules[prev];
       if (pr && !pr.off) {
-        const ps = mins(pr.start.h, pr.start.m);
         const pe = mins(pr.end.h, pr.end.m);
+        const ps = mins(pr.start.h, pr.start.m);
         if (pe <= ps && n < e) return true;
       }
       return false;
     } else {
-      // No cruza medianoche
       return n >= s && n < e;
     }
   }
 
-  function fmt(h, m = 0) {
-    const hh = String(h).padStart(2, "0");
-    const mm = String(m).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
+  const fmt = (h, m=0) => `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
 
   function render() {
     const now = nowTZ();
     tbody.innerHTML = "";
-
     for (let i = 0; i < 7; i++) {
       const rule = rules[i];
       const tr = document.createElement("tr");
 
       const tdDay = document.createElement("td");
-      tdDay.textContent = days[i][0].toUpperCase() + days[i].slice(1);
+      const name = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][i];
+      tdDay.textContent = name[0].toUpperCase() + name.slice(1);
 
       const tdTime = document.createElement("td");
-      if (rule.off) {
-        tdTime.textContent = "Descanso";
-      } else {
-        tdTime.textContent = `${fmt(rule.start.h, rule.start.m)} - ${fmt(rule.end.h, rule.end.m)}`;
-      }
+      tdTime.textContent = rule.off ? "Descanso" : `${fmt(rule.start.h, rule.start.m)} - ${fmt(rule.end.h, rule.end.m)}`;
 
       const tdState = document.createElement("td");
       let live = false;
-
       if (!rule.off) {
-        // Resalta “en directo” SOLO en el día actual (visual principal)
         if (i === now.dow) {
           live = isLiveForDay(i, now);
         } else if (i === (now.dow + 6) % 7) {
-          // madrugada: el “en vivo” pertenece al día anterior
-          const currRule = rules[now.dow];
-          if (currRule && !currRule.off) {
-            const ce = mins(currRule.end.h, currRule.end.m);
-            const cs = mins(currRule.start.h, currRule.start.m);
+          const curr = rules[now.dow];
+          if (curr && !curr.off) {
+            const ce = mins(curr.end.h, curr.end.m);
+            const cs = mins(curr.start.h, curr.start.m);
             const n  = mins(now.h, now.m);
             if (ce <= cs && n < ce) live = true;
           }
         }
       }
-
       tdState.innerHTML = live ? `<span class="badge-live">En directo ahora</span>` : "—";
       if (live) tr.classList.add("active");
 
@@ -336,19 +249,13 @@ export const debounce = (fn, wait = 200) => {
   }
 
   render();
-  // Actualiza cada minuto
   setInterval(render, 60 * 1000);
 })();
 
 /* ===========================
-   Footer: año dinámico
+   Año dinámico
    =========================== */
 (function year() {
   const y = $("#year");
   if (y) y.textContent = new Date().getFullYear();
 })();
-
-/* ===========================
-   Exponer helpers (debug opcional)
-   =========================== */
-window.__MF__ = { showToast, setCloudStatus, MAX_CLIPS };
