@@ -3,44 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <title>MontanaFrx — Streamer IRL y Setup</title>
-  <meta name="description" content="Streamer ecuatoriano de IRL y setup. Charlas, música y juegos. ¡Únete a los M!" />
+  <meta name="description" content="Streamer ecuatoriano de IRL y setup. Charlas, música y Juegos. ¡Únete a los M!" />
   <meta name="theme-color" content="#0B0B0B" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="MontanaFrx — Streamer IRL y Setup" />
-  <meta property="og:description" content="Charlas, música y Among Us. ¡Únete a los M!" />
+  <meta property="og:description" content="Charlas, música y Juegos. ¡Únete a los M!" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://kick.com/montanafrx" />
-  <meta property="og:image" content="monta.jpeg" />
+  <meta property="og:image" content="img/profile.jpg" />
 
-  <!-- Favicon (SVG inline) -->
-  <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B0B'/%3E%3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E%3C/svg%3E">
+  <!-- Favicon (SVG data URI) -->
+  <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B0B'/%3E%3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E%3C/svg%3E" />
 
   <!-- Fuentes -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
 
-  <!-- CSS -->
+  <!-- Estilos -->
   <link rel="stylesheet" href="./Estilo.css" />
 </head>
 <body>
   <a class="skip-link" href="#main">Saltar al contenido</a>
 
-  <!-- Header -->
+  <!-- Header / Navbar -->
   <header class="site-header" role="banner">
     <div class="container header-inner">
       <a href="#inicio" class="brand" aria-label="Ir a inicio">
-        <span class="logo" aria-hidden="true">⚡</span>
+        <span class="logo">⚡</span>
         <span class="brand-text">MontanaFrx</span>
       </a>
 
       <nav class="main-nav" aria-label="Navegación principal">
-        <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú">
-          <span class="nav-bars" aria-hidden="true"></span>
-          <span class="sr-only">Menú</span>
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú">
+          <span class="nav-bars"></span>
         </button>
         <ul id="nav-menu" class="nav-list">
           <li><a href="#inicio">Inicio</a></li>
@@ -53,7 +51,7 @@
       </nav>
 
       <div class="header-ctas">
-        <a class="btn glow cta-small" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en Kick</a>
+        <a class="btn glow" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en Kick</a>
       </div>
     </div>
   </header>
@@ -62,30 +60,28 @@
     <!-- HERO -->
     <section id="inicio" class="hero" aria-label="Inicio">
       <div class="container hero-inner">
-        <div class="hero-copy">
+        <div>
           <p class="kicker">Streamer · IRL · Setup</p>
           <h1>MontanaFrx</h1>
-          <p class="hero-desc">Streamer IRL y de setup: charlas, música y <em>Juegos con la Comunidad</em>. Comunidad chill y risas.</p>
-
+          <p class="hero-desc">Streamer IRL y de setup: charlas, música y <em>Juegos con la comunidad</em>. Comunidad chill, vibes y risas.</p>
           <div class="hero-actions">
             <a class="btn primary glow" href="https://kick.com/montanafrx" target="_blank" rel="noopener">Ver en vivo en Kick</a>
             <a class="btn glow" href="https://discord.gg/sxcJVwzK8Z" target="_blank" rel="noopener">Unirse al Discord</a>
           </div>
 
+          <!-- Lema (separado hacia abajo por CSS .lema-wrap) -->
           <div class="hero-card lema-wrap">
-            <!-- El texto se anima con typewriter desde funciones.js -->
-            <div class="lema"><span id="typewriter" class="typewriter" aria-label="Lema">“BIENVENIDOS A LOS M, UNANSE A LOS M”</span></div>
+            <div class="lema"><span id="typewriter" class="typewriter"></span></div>
           </div>
         </div>
 
         <aside class="hero-card hero-media">
-          <!-- Si la URL de Instagram no es directa, usa esta imagen local -->
-          <img class="avatar" src="monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
+          <!-- FOTO: usa /img/profile.jpg si no hay link directo -->
+          <img id="avatar" class="avatar" src="./monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
           <p class="lemma-secondary">“BIENVENIDOS A LOS M, UNANSE A LOS M”</p>
         </aside>
       </div>
 
-      <!-- Temáticas -->
       <div class="container features" aria-label="Temáticas">
         <div class="feature">
           <span class="icon" aria-hidden="true">
@@ -95,7 +91,7 @@
         </div>
         <div class="feature">
           <span class="icon" aria-hidden="true">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3v9a3 3 0 1 1-6 0V6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 12a7 7 0 0 1-14 0M12 19v2" stroke="currentColor" stroke-linecap="round"/></svg>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3v9a3 3 0 1 1-6 0V6" stroke="currentColor" stroke-linecap="round"/><path d="M19 12a7 7 0 0 1-14 0M12 19v2" stroke="currentColor"/></svg>
           </span>
           <div><strong>Música</strong><div class="muted">Playlist y reacciones</div></div>
         </div>
@@ -114,7 +110,7 @@
       </div>
     </section>
 
-    <!-- REDES (antes de Sobre mí) -->
+    <!-- REDES -->
     <section id="redes" class="section" aria-labelledby="redes-title">
       <div class="container">
         <h2 id="redes-title">Redes sociales</h2>
@@ -143,7 +139,7 @@
       <div class="container about-grid">
         <div>
           <h2 id="sobre-mi-title">Sobre mí</h2>
-          <p class="lead">Streamer ecuatoriano de IRL y setup. Charlas, música y partidas de Among Us. <strong>¡Únete a los M!</strong></p>
+          <p class="lead">Streamer ecuatoriano de IRL y setup. Charlas, música y Juegos. <strong>¡Únete a los M!</strong></p>
         </div>
         <div class="about-card">
           <p>En este canal encontrarás streams relajados, interacción directa con la comunidad y buen humor. Me gusta explorar la ciudad en IRL, reaccionar a música nueva y jugar con ustedes.</p>
@@ -166,9 +162,7 @@
             <thead>
               <tr><th>Día</th><th>Horario</th><th>Estado</th></tr>
             </thead>
-            <tbody id="schedule-body">
-              <!-- Se llena por funciones.js con LUN 21:45–01:00; Mar/Mié/Jue/Vie/Dom igual; Sábado descanso -->
-            </tbody>
+            <tbody id="schedule-body"></tbody>
           </table>
         </div>
       </div>
@@ -178,15 +172,54 @@
     <section id="clips" class="section" aria-labelledby="clips-title">
       <div class="container">
         <div class="clips-header">
-          <h2 id="clips-title">Clips destacados</h2>
-          <button id="btn-add-clip" class="btn glow" type="button">➕ Agregar clip</button>
+          <div>
+            <h2 id="clips-title">Clips destacados</h2>
+            <p class="lead">Agrega clips por URL (Kick/YouTube) o sube un video local.</p>
+          </div>
+          <button id="addClipBtn" class="btn glow" type="button" aria-haspopup="dialog">+ Agregar clip</button>
         </div>
-        <p class="lead">Agrega clips por URL (Kick/YouTube) o sube un video local en esta sesión.</p>
-        <div class="clip-grid" id="clip-grid" role="list">
-          <!-- Tarjetas renderizadas por clips.js -->
-        </div>
+
+        <!-- Contenedor donde se renderizan los clips (máx 6) -->
+        <div id="clipsContainer" class="clip-grid" role="list"></div>
       </div>
     </section>
+
+    <!-- MODAL Clips (Agregar/Editar) -->
+    <div id="clipModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="clipModalTitle">
+      <div class="modal__content">
+        <div class="modal__header">
+          <h3 id="clipModalTitle">Agregar clip</h3>
+          <button id="closeClipModal" class="icon-btn" aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+
+        <form id="clipForm" class="modal__form">
+          <input type="hidden" id="clipId" />
+
+          <label>
+            Título del clip
+            <input id="clipTitle" class="input" type="text" name="title" minlength="2" required />
+          </label>
+
+          <label>
+            URL (Kick/YouTube) — opcional si subes archivo
+            <input id="clipUrl" class="input" type="url" name="url" placeholder="https://..." />
+          </label>
+
+          <div class="file-row">
+            <label for="clipFile">O subir archivo de video (local)</label>
+            <input id="clipFile" type="file" accept="video/*" />
+            <div id="clipPreview" class="preview" aria-live="polite"></div>
+          </div>
+
+          <div class="modal__actions">
+            <button type="submit" class="btn primary">Guardar</button>
+            <button type="button" id="cancelClip" class="btn">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- CONTACTO -->
     <section id="contacto" class="section" aria-labelledby="contacto-title">
@@ -206,13 +239,12 @@
             <textarea id="message" class="textarea" name="message" rows="4" minlength="10" required></textarea>
           </div>
           <div class="helper" id="form-helper" role="status" aria-live="polite"></div>
-          <button class="btn glow btn-block" type="submit">Enviar</button>
+          <button class="btn glow" type="submit">Enviar</button>
         </form>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="site-footer" role="contentinfo">
     <div class="container footer-inner">
       <p>© <span id="year"></span> MontanaFrx · Sitio fan/brand personal.</p>
@@ -223,47 +255,15 @@
     </div>
   </footer>
 
-  <!-- MODAL CRUD CLIPS -->
-  <div id="clip-modal" class="modal hidden" aria-hidden="true" role="dialog" aria-labelledby="clip-modal-title">
-    <div class="modal__content" role="document">
-      <div class="modal__header">
-        <h3 id="clip-modal-title">Agregar clip</h3>
-        <button id="clip-modal-close" class="icon-btn" aria-label="Cerrar">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </button>
-      </div>
-      <form id="clip-form" class="modal__form">
-        <input type="hidden" id="clip-id" />
-        <label for="clip-title">Título</label>
-        <input id="clip-title" type="text" required class="input" />
-
-        <label for="clip-url">URL del clip (Kick/YouTube u otra)</label>
-        <input id="clip-url" type="url" placeholder="https://…" class="input" />
-
-        <div class="file-row">
-          <label for="clip-file">O subir un video local</label>
-          <input id="clip-file" type="file" accept="video/*" />
-        </div>
-
-        <div id="clip-preview" class="preview"></div>
-
-        <div class="modal__actions">
-          <button type="submit" class="btn glow">Guardar</button>
-          <button type="button" id="clip-cancel" class="btn">Cancelar</button>
-        </div>
-        <p class="muted" style="margin:6px 0 0">Nota: los videos locales usan URL <code>blob:</code> y no persisten tras recargar.</p>
-      </form>
-    </div>
-  </div>
-
   <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite">Mensaje enviado ✔</div>
 
-  <!-- Schema.org Person (lo llena funciones.js) -->
+  <!-- Schema.org Person -->
   <script type="application/ld+json" id="schema-person"></script>
 
-  <!-- Scripts (asegúrate de tener estos archivos en la raíz) -->
-  <script src="./funciones.js" defer></script>
-  <script src="./clips.js" defer></script>
+  <!-- JS -->
+  <script src="./funciones.js"></script>
+  <script src="./clips.js"></script>
 </body>
 </html>
+

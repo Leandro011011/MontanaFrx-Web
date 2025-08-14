@@ -1,175 +1,265 @@
-/*  CLIPS – CRUD con modal en la misma pestaña + localStorage
-    Requiere en HTML:
-    - Botón:   #btn-add-clip
-    - Grid:    #clip-grid
-    - Modal:   #clip-modal (con #clip-form, #clip-id, #clip-title, #clip-url, #clip-file, #clip-preview, #clip-modal-close, #clip-cancel)
-    - Toast:   #toast (opcional; si no, usa alert)
-*/
-(function () {
-  if (window.__clipsBound) return; // evita doble inicialización
-  window.__clipsBound = true;
+/* ===========================
+   clips.js — CRUD de clips con límite de 6
+   =========================== */
 
-  const q  = (s, d=document)=> d.querySelector(s);
-  const qa = (s, d=document)=> [...d.querySelectorAll(s)];
-  const esc = (s)=> String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const toast = (msg)=>{ const t=q('#toast'); if(!t){ alert(msg); return; } t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); };
+const CLIPS_KEY = "montanafrx.clips.v1"; // almacenamiento local (URLs y metadatos)
 
-  const CLIPS_KEY='clips';
-  const defaultClips=[{id:crypto.randomUUID(), title:'Clip: charlas con la comunidad', url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', local:false, createdAt:Date.now()}];
-  const getClips=()=>{ try{ const raw=localStorage.getItem(CLIPS_KEY); if(!raw){ localStorage.setItem(CLIPS_KEY, JSON.stringify(defaultClips)); return defaultClips; } return JSON.parse(raw);}catch{ return defaultClips; } };
-  const setClips=(arr)=> localStorage.setItem(CLIPS_KEY, JSON.stringify(arr));
+const els = {
+  grid: document.getElementById("clipsContainer"),
+  addBtn: document.getElementById("addClipBtn"),
+  modal: document.getElementById("clipModal"),
+  modalTitle: document.getElementById("clipModalTitle"),
+  closeBtn: document.getElementById("closeClipModal"),
+  cancelBtn: document.getElementById("cancelClip"),
+  form: document.getElementById("clipForm"),
+  fieldId: document.getElementById("clipId"),
+  fieldTitle: document.getElementById("clipTitle"),
+  fieldUrl: document.getElementById("clipUrl"),
+  fieldFile: document.getElementById("clipFile"),
+  preview: document.getElementById("clipPreview")
+};
 
-  const isVideoFile = (url)=> url.startsWith('blob:') || /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url);
-  const ytId = (url)=>{ try{ const u=new URL(url); if(u.hostname.includes('youtu.be')) return u.pathname.slice(1); if(u.hostname.includes('youtube.com')) return u.searchParams.get('v')||''; }catch{} return ''; };
+let state = {
+  clips: [],
+  editingId: null,
+  previewUrl: null // para revocar ObjectURL
+};
 
-  const pencilSvg = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 20l4-1 9-9-3-3-9 9-1 4zM14 5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const trashSvg  = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-  // refs modal
-  let modal, modalTitle, modalClose, modalCancel, form, fId, fTitle, fUrl, fFile, fPrev;
-  let blobUrl='';
-
-  function ensureModalRefs(){
-    modal = q('#clip-modal');
-    modalTitle = q('#clip-modal-title');
-    modalClose = q('#clip-modal-close');
-    modalCancel = q('#clip-cancel');
-    form = q('#clip-form');
-    fId = q('#clip-id');
-    fTitle = q('#clip-title');
-    fUrl = q('#clip-url');
-    fFile = q('#clip-file');
-    fPrev = q('#clip-preview');
-    const all = [modal, modalTitle, modalClose, modalCancel, form, fId, fTitle, fUrl, fFile, fPrev];
-    if (all.some(x=>!x)) console.warn('clips.js: faltan elementos del modal en el HTML');
+function loadClips() {
+  try {
+    const raw = localStorage.getItem(CLIPS_KEY);
+    state.clips = raw ? JSON.parse(raw) : [];
+  } catch {
+    state.clips = [];
   }
+}
 
-  function clipCard(clip){
-    const media = isVideoFile(clip.url)
-      ? `<video class="thumb" src="${clip.url}" controls preload="metadata"></video>`
-      : (ytId(clip.url)
-          ? `<img class="thumb" src="https://img.youtube.com/vi/${ytId(clip.url)}/hqdefault.jpg" alt="Miniatura del clip">`
-          : `<img class="thumb" src="monta.jpeg" alt="Miniatura del clip">`);
-    const localBadge = clip.local ? ' <span class="badge-local">local</span>' : '';
-    return `
-      <article class="card" role="listitem" data-id="${clip.id}">
-        ${media}
-        <div class="card-body">
-          <h3 class="card-title">${esc(clip.title)}${localBadge}</h3>
-          <div class="card-actions">
-            <a class="btn btn-small" href="${clip.url}" target="_blank" rel="noopener">Ver clip</a>
-            <button class="icon-btn js-edit" title="Editar">${pencilSvg}</button>
-            <button class="icon-btn js-delete" title="Eliminar">${trashSvg}</button>
-          </div>
-        </div>
-      </article>
-    `;
+function saveClips() {
+  localStorage.setItem(CLIPS_KEY, JSON.stringify(state.clips));
+}
+
+function openModal(mode = "add", clip = null) {
+  els.modal.classList.remove("hidden");
+  els.modal.setAttribute("aria-hidden", "false");
+  els.modalTitle.textContent = mode === "add" ? "Agregar clip" : "Editar clip";
+  els.form.reset();
+  els.preview.innerHTML = "";
+  if (state.previewUrl) {
+    URL.revokeObjectURL(state.previewUrl);
+    state.previewUrl = null;
   }
+  state.editingId = null;
+  els.fieldId.value = "";
 
-  function renderClips(){
-    const grid = q('#clip-grid'); if(!grid){ console.warn('No existe #clip-grid'); return; }
-    const list = getClips().sort((a,b)=>b.createdAt-a.createdAt);
-    grid.innerHTML = list.length ? list.map(clipCard).join('') : `<p class="muted">Aún no hay clips. Agrega uno con “➕ Agregar clip”.</p>`;
-
-    qa('.js-edit', grid).forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        const id = e.currentTarget.closest('[data-id]')?.dataset.id;
-        if (id) openClipModal('edit', id);
-      });
-    });
-    qa('.js-delete', grid).forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        const id = e.currentTarget.closest('[data-id]')?.dataset.id;
-        if (!id) return;
-        if (confirm('¿Seguro que quieres eliminar este clip?')) {
-          setClips(getClips().filter(c=>c.id!==id));
-          renderClips();
-          toast('Clip eliminado');
-        }
-      });
-    });
+  if (clip) {
+    state.editingId = clip.id;
+    els.fieldId.value = clip.id;
+    els.fieldTitle.value = clip.title || "";
+    els.fieldUrl.value = clip.url || "";
+    // No cargamos archivo local en input file (por seguridad los navegadores no lo permiten).
+    if (clip.localSrc) {
+      // mostramos aviso de que es local
+      const warn = document.createElement("div");
+      warn.className = "muted";
+      warn.textContent = "Este clip es local (de esta sesión). Puedes reemplazarlo subiendo otro archivo.";
+      els.preview.appendChild(warn);
+    }
   }
+  els.fieldTitle.focus();
+}
 
-  function openClipModal(mode='add', id=null){
-    ensureModalRefs();
-    if (!modal) return;
+function closeModal() {
+  els.modal.classList.add("hidden");
+  els.modal.setAttribute("aria-hidden", "true");
+}
 
-    if (mode === 'edit') {
-      const clip = getClips().find(c=>c.id===id); if(!clip) return;
-      modalTitle.textContent = 'Editar clip';
-      fId.value = clip.id; fTitle.value = clip.title; fUrl.value = clip.url;
-      renderPreview(clip.url);
+function renderClips() {
+  const grid = els.grid;
+  grid.innerHTML = "";
+
+  state.clips.forEach((c) => {
+    const card = document.createElement("article");
+    card.className = "card";
+    card.setAttribute("role", "listitem");
+
+    // Thumb
+    const thumbWrap = document.createElement("div");
+    const isLocalVideo = !!c.localSrc;
+    if (isLocalVideo) {
+      const vid = document.createElement("video");
+      vid.className = "thumb";
+      vid.src = c.localSrc;
+      vid.controls = false;
+      vid.muted = true;
+      vid.playsInline = true;
+      thumbWrap.appendChild(vid);
     } else {
-      modalTitle.textContent = 'Agregar clip';
-      fId.value=''; fTitle.value=''; fUrl.value=''; if(fFile) fFile.value=''; fPrev.innerHTML='';
+      // No garantizamos thumb remota; usamos un fondo neutro con texto
+      const ph = document.createElement("div");
+      ph.className = "thumb";
+      ph.style.display = "grid";
+      ph.style.placeItems = "center";
+      ph.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
+      ph.style.color = "var(--muted)";
+      ph.style.fontWeight = "600";
+      ph.textContent = "Clip";
+      thumbWrap.appendChild(ph);
     }
 
-    document.body.style.overflow='hidden';
-    modal.classList.remove('hidden');
-    modal.setAttribute('aria-hidden','false');
-    fTitle.focus();
-  }
+    // Body
+    const body = document.createElement("div");
+    body.className = "card-body";
+    const title = document.createElement("h3");
+    title.className = "card-title";
+    title.textContent = c.title || "Clip";
 
-  function closeClipModal(){
-    if (blobUrl){ URL.revokeObjectURL(blobUrl); blobUrl=''; }
-    document.body.style.overflow='';
-    modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden','true');
-    fPrev.innerHTML='';
-  }
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
 
-  function renderPreview(src){
-    if (!src){ fPrev.innerHTML=''; return; }
-    if (isVideoFile(src)) fPrev.innerHTML = `<video src="${src}" controls></video>`;
-    else if (ytId(src))   fPrev.innerHTML = `<img src="https://img.youtube.com/vi/${ytId(src)}/hqdefault.jpg" alt="Miniatura">`;
-    else                  fPrev.innerHTML = `<img src="monta.jpeg" alt="Miniatura">`;
-  }
+    // Ver clip (abre en nueva pestaña si hay URL; si es local, abre el blob)
+    const btnView = document.createElement("a");
+    btnView.className = "btn";
+    btnView.textContent = "Ver clip";
+    btnView.target = "_blank";
+    btnView.rel = "noopener";
+    btnView.href = c.url ? c.url : (c.localSrc || "#");
+    actions.appendChild(btnView);
 
-  function onFileChange(){
-    const file = fFile.files?.[0];
-    if (!file) return;
-    if (blobUrl) URL.revokeObjectURL(blobUrl);
-    blobUrl = URL.createObjectURL(file);
-    fUrl.value = blobUrl; // prioriza archivo local
-    renderPreview(blobUrl);
-  }
+    // Editar
+    const btnEdit = document.createElement("button");
+    btnEdit.className = "icon-btn";
+    btnEdit.title = "Editar";
+    btnEdit.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 20h4l10-10a2.5 2.5 0 0 0-4-4L4 16v4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+      </svg>`;
+    btnEdit.addEventListener("click", () => openModal("edit", c));
+    actions.appendChild(btnEdit);
 
-  function onSave(e){
-    e.preventDefault();
-    const id = fId.value.trim();
-    const title = fTitle.value.trim();
-    const url = fUrl.value.trim();
+    // Eliminar
+    const btnDel = document.createElement("button");
+    btnDel.className = "icon-btn";
+    btnDel.title = "Eliminar";
+    btnDel.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 6h18M8 6l1-2h6l1 2m-1 0v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      </svg>`;
+    btnDel.addEventListener("click", () => {
+      if (confirm("¿Seguro que deseas eliminar este clip?")) {
+        state.clips = state.clips.filter((x) => x.id !== c.id);
+        saveClips();
+        renderClips();
+        if (c.localSrc) URL.revokeObjectURL(c.localSrc);
+        showToast("Clip eliminado");
+      }
+    });
+    actions.appendChild(btnDel);
 
-    if (!title){ toast('Pon un título'); fTitle.focus(); return; }
-    if (!url){ toast('Pega una URL o selecciona un archivo'); return; }
-
-    const list = getClips();
-    if (id){
-      const i = list.findIndex(c=>c.id===id);
-      if (i>-1) list[i] = { ...list[i], title, url, local:url.startsWith('blob:'), updatedAt:Date.now() };
-      toast('Clip actualizado');
-    } else {
-      list.push({ id: crypto.randomUUID(), title, url, local:url.startsWith('blob:'), createdAt:Date.now() });
-      toast('Clip agregado');
-    }
-    setClips(list);
-    renderClips();
-    closeClipModal();
-  }
-
-  // Bind inicial al cargar el DOM
-  document.addEventListener('DOMContentLoaded', () => {
-    ensureModalRefs();
-    // Botón agregar
-    q('#btn-add-clip')?.addEventListener('click', ()=> openClipModal('add'));
-    // Acciones modal
-    q('#clip-modal-close')?.addEventListener('click', closeClipModal);
-    q('#clip-cancel')?.addEventListener('click', closeClipModal);
-    q('#clip-modal')?.addEventListener('click', (e)=>{ if (e.target.id === 'clip-modal') closeClipModal(); });
-    fFile?.addEventListener('change', onFileChange);
-    form?.addEventListener('submit', onSave);
-
-    // Primer render
-    renderClips();
+    body.append(title, actions);
+    card.append(thumbWrap, body);
+    grid.appendChild(card);
   });
-})();
+}
+
+function ensureMaxBeforeAdd() {
+  if (state.clips.length >= 6) {
+    showToast("Solo se permite un máximo de 6 clips. Elimine uno para agregar otro.");
+    return false;
+  }
+  return true;
+}
+
+function createId() {
+  return "c_" + Math.random().toString(36).slice(2, 9);
+}
+
+function handleFilePreview() {
+  els.preview.innerHTML = "";
+  if (state.previewUrl) {
+    URL.revokeObjectURL(state.previewUrl);
+    state.previewUrl = null;
+  }
+  const f = els.fieldFile.files?.[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  state.previewUrl = url;
+  const vid = document.createElement("video");
+  vid.src = url;
+  vid.controls = true;
+  vid.style.width = "100%";
+  vid.style.borderRadius = "12px";
+  els.preview.appendChild(vid);
+}
+
+// ---------- Eventos ----------
+loadClips();
+renderClips();
+
+if (els.addBtn) {
+  els.addBtn.addEventListener("click", () => {
+    if (!ensureMaxBeforeAdd()) return;
+    openModal("add");
+  });
+}
+
+if (els.closeBtn) els.closeBtn.addEventListener("click", closeModal);
+if (els.cancelBtn) els.cancelBtn.addEventListener("click", closeModal);
+if (els.modal) {
+  els.modal.addEventListener("click", (e) => {
+    if (e.target === els.modal) closeModal();
+  });
+}
+
+if (els.fieldFile) els.fieldFile.addEventListener("change", handleFilePreview);
+
+if (els.form) {
+  els.form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = els.fieldTitle.value.trim();
+    const url = els.fieldUrl.value.trim();
+    const file = els.fieldFile.files?.[0];
+
+    if (!title) return showToast("El título es obligatorio.");
+
+    // Si estamos agregando, revisa límite
+    const isEditing = !!state.editingId;
+    if (!isEditing && state.clips.length >= 6) {
+      showToast("Solo se permite un máximo de 6 clips. Elimine uno para agregar otro.");
+      return;
+    }
+
+    // Construir clip
+    const data = {
+      id: isEditing ? state.editingId : createId(),
+      title,
+      url: url || "",
+      // localSrc: solo si se sube archivo
+      localSrc: null
+    };
+
+    if (file) {
+      // Blob local: persistirá solo en esta sesión
+      const blobUrl = state.previewUrl || URL.createObjectURL(file);
+      data.localSrc = blobUrl;
+    }
+
+    if (isEditing) {
+      const idx = state.clips.findIndex((x) => x.id === state.editingId);
+      if (idx >= 0) {
+        // Revocar antiguo localSrc si se reemplazó por nuevo archivo
+        if (state.clips[idx].localSrc && data.localSrc && state.clips[idx].localSrc !== data.localSrc) {
+          try { URL.revokeObjectURL(state.clips[idx].localSrc); } catch {}
+        }
+        state.clips[idx] = data;
+      }
+      showToast("Clip actualizado");
+    } else {
+      state.clips.unshift(data);
+      showToast("Clip agregado");
+    }
+
+    saveClips();
+    renderClips();
+    closeModal();
+  });
+}
