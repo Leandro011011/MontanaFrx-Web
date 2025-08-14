@@ -4,12 +4,12 @@
    =========================== */
 
 :root{
-  --bg:#0B0B0B;        /* fondo oscuro principal */
-  --fg:#F3F4F6;        /* texto principal */
-  --muted:#9CA3AF;     /* texto secundario */
-  --panel:#111317;     /* paneles / tarjetas */
-  --border:#374151;    /* bordes sutiles */
-  --accent:#00FF88;    /* verde neón */
+  --bg:#0B0B0B;
+  --fg:#F3F4F6;
+  --muted:#9CA3AF;
+  --panel:#111317;
+  --border:#374151;
+  --accent:#00FF88;
   --radius:16px;
   --shadow:0 8px 28px rgba(0,0,0,.35);
   --container:1180px;
@@ -75,21 +75,19 @@ h1,h2,h3{font-family:Poppins,Inter,Arial,sans-serif;margin:0 0 .5rem}
 
 /* Hero */
 .hero{padding:28px 0;border-bottom:1px solid var(--border)}
-.hero-inner{display:grid;grid-template-columns:1fr;gap:24px;align-items:center}
+.hero-inner{display:grid;grid-template-columns:1fr;gap:16px;align-items:center}
 .kicker{color:var(--accent);text-transform:uppercase;letter-spacing:.2em;font-size:.8rem}
 .hero h1{font-size:clamp(1.8rem,6.8vw,3rem);line-height:1.15}
 .hero-desc{color:var(--muted);margin:.25rem 0 1rem}
-.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
-.hero-card{background:linear-gradient(180deg, rgba(0,255,136,.08), rgba(0,0,0,.0));border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-.lema-wrap{margin-top:54px !important;} /* ← aumentado para más separación */
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.hero-card{background:linear-gradient(180deg, rgba(0,255,136,.08), rgba(0,0,0,.0));border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-top:20px;}
 .lema{font-family:Poppins,Inter,Arial;font-weight:700;font-size:clamp(1rem,4.2vw,1.25rem)}
 .typewriter{border-right:2px solid var(--accent);white-space:nowrap;overflow:hidden}
 .hero-media{display:grid;place-items:center;text-align:center}
 .avatar{width:min(55vw,180px);aspect-ratio:1/1;border-radius:999px;object-fit:cover;border:2px solid var(--accent);box-shadow:0 0 24px rgba(0,255,136,.25)}
 .lemma-secondary{color:var(--muted);margin-top:8px}
 
-
-/* Features (IRL/Música/Charlas/Gaming) */
+/* Features */
 .features{
   max-width:980px;margin:18px auto 0;padding-inline:6px;
   display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
@@ -147,6 +145,19 @@ h1,h2,h3{font-family:Poppins,Inter,Arial,sans-serif;margin:0 0 .5rem}
 .card-actions{display:flex;gap:6px;flex-wrap:wrap}
 .badge-local{display:inline-block;font-size:.75rem;color:#0B0B0B;background:var(--accent);padding:2px 6px;border-radius:999px}
 
+/* Íconos blancos para editar y eliminar */
+.clip-actions button svg,
+#clips .icon-btn svg {
+  stroke: #fff !important;
+  fill: #fff !important;
+  color: #fff !important;
+}
+.clip-actions button:hover svg,
+#clips .icon-btn:hover svg {
+  opacity: 0.9;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,.25));
+}
+
 /* Contacto */
 .form{display:grid;gap:10px;background:#0f1115;border:1px solid var(--border);border-radius:14px;padding:14px}
 .form-row{display:grid;gap:6px}
@@ -190,15 +201,25 @@ h1,h2,h3{font-family:Poppins,Inter,Arial,sans-serif;margin:0 0 .5rem}
 }
 
 /* ===========================
-   OVERRIDE: Íconos edición/eliminación en blanco
-   (solo dentro de la sección #clips para no afectar otros iconos)
+   UI para límite de 6 clips
    =========================== */
-#clips .icon-btn svg{
-  stroke:#fff !important;
-  fill:#fff !important;
-  color:#fff !important;
+#addClipBtn[disabled],
+#addClipBtn.is-disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  filter: grayscale(.25);
+  box-shadow: none !important;
+  transform: none !important;
 }
-#clips .icon-btn:hover svg{
-  opacity:.9;
-  filter:drop-shadow(0 0 4px rgba(255,255,255,.25));
+.clips-header .limit-note {
+  color: var(--muted);
+  font-size: .9rem;
+  margin-left: 12px;
+}
+.clip-grid.max-reached::after {
+  content: "Límite de 6 clips alcanzado. Elimina uno para agregar otro.";
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: .92rem;
 }
