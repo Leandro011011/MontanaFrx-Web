@@ -16,7 +16,11 @@
   <meta property="og:image" content="monta.jpeg" />
 
   <!-- Favicon (SVG data URI) -->
-  <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3rect width='64' height='64' rx='14' fill='%230B0B0B'/%3E%3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml;utf8,
+  %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E
+  %3Crect width='64' height='64' rx='14' fill='%230B0B0B'/%3E
+  %3Cpath d='M38 6 22 36h10l-6 22 16-30H32l6-22z' fill='%2300FF88'/%3E
+  %3C/svg%3E" />
 
   <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,7 +33,7 @@
 <body>
   <a class="skip-link" href="#main">Saltar al contenido</a>
 
-  <!-- Banner de estado de nube (lo controla JS) -->
+  <!-- Banner de estado de nube (lo actualiza funciones.js) -->
   <div id="cloud-status" class="muted" style="font-size:.9rem;text-align:center;padding:6px 10px;border-bottom:1px solid var(--border);background:#0f1115;">
     Conectando a la nube…
   </div>
@@ -75,7 +79,7 @@
             <a class="btn glow" href="https://discord.gg/sxcJVwzK8Z" target="_blank" rel="noopener">Unirse al Discord</a>
           </div>
 
-          <!-- Lema (separado hacia abajo por CSS .lema-wrap) -->
+          <!-- Lema (se baja con CSS .lema-wrap; ya lo usas a 54px) -->
           <div class="hero-card lema-wrap" style="margin-top:54px">
             <div class="lema"><span id="typewriter" class="typewriter">“BIENVENIDOS A LOS M, UNANSE A LOS M”</span></div>
           </div>
@@ -180,7 +184,7 @@
         <div class="clips-header">
           <div>
             <h2 id="clips-title">Clips destacados</h2>
-            <p class="lead">Los clips se guardan en la nube. Máximo 6. Puedes usar URL (Kick/YouTube) o subir un video.</p>
+            <p class="lead">Los clips se guardan en la nube. Máximo 6. Usa URL (Kick/YouTube) o sube un video.</p>
           </div>
           <button id="addClipBtn" class="btn glow" type="button" aria-haspopup="dialog">+ Agregar clip</button>
         </div>
@@ -231,7 +235,7 @@
     <section id="contacto" class="section" aria-labelledby="contacto-title">
       <div class="container">
         <h2 id="contacto-title">Contacto</h2>
-      <form id="contact-form" class="form" novalidate>
+        <form id="contact-form" class="form" novalidate>
           <div class="form-row">
             <label for="name">Nombre</label>
             <input id="name" class="input" name="name" type="text" minlength="2" required />
@@ -267,9 +271,8 @@
   <!-- Schema.org Person -->
   <script type="application/ld+json" id="schema-person"></script>
 
-  <!-- Scripts (lógica en los JS que te paso después) -->
+  <!-- Scripts como módulos (necesario para que cargue la lógica de horarios y clips) -->
   <script type="module" src="./funciones.js"></script>
   <script type="module" src="./clips.js"></script>
-
 </body>
 </html>
