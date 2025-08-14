@@ -187,7 +187,7 @@ export { db, storage };
       .indexOf(parts.weekday.toLowerCase());
     return { h:+parts.hour, m:+parts.minute, dow };
   }
-
+ 
   function isLiveForDay(dayIndex, now) {
     const rule = rules[dayIndex];
     if (!rule || rule.off) return false;
