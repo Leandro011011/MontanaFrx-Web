@@ -1,12 +1,12 @@
 /* ===========================
    clips.js — CRUD Clips (Firebase)
-   Límite 6 + Tiempo real + Miniatura YouTube + Modal robusto
+   Límite 6 + Tiempo real + Miniatura (YouTube / video / image opcional)
    =========================== */
 
 import { db, storage, showToast, setCloudStatus, MAX_CLIPS, $, $$ } from "./funciones.js";
 import {
   collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc,
-  query, orderBy, serverTimestamp
+  query, orderBy, serverTimestamp, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   ref, uploadBytes, getDownloadURL, deleteObject
@@ -38,7 +38,9 @@ let state = {
   cache: new Map(), // id -> data (para conocer storagePath previo)
 };
 
-/* ---------- Helpers ---------- */
+/* ===========================
+   Helpers
+   =========================== */
 function btnAddSetDisabled(disabled) {
   if (!els.addBtn) return;
   els.addBtn.disabled = disabled;
@@ -71,16 +73,34 @@ function getYoutubeThumb(url = "") {
   return null;
 }
 
+/** Construye y añade un "thumb" placeholder elegante */
+function setPlaceholderThumb(parent, text = "Clip") {
+  const ph = document.createElement("div");
+  ph.className = "thumb";
+  ph.style.display = "grid";
+  ph.style.placeItems = "center";
+  ph.style.background = "linear-gradient(180deg, rgba(0,255,136,.10), rgba(0,0,0,0))";
+  ph.style.color = "var(--muted)";
+  ph.style.fontWeight = "600";
+  ph.textContent = text;
+  parent.appendChild(ph);
+}
+
+/* ===========================
+   Modal
+   =========================== */
 function openModal(mode = "add", data = null) {
   els.modal.classList.remove("hidden");
   els.modal.setAttribute("aria-hidden", "false");
   els.modalTitle.textContent = mode === "edit" ? "Editar clip" : "Agregar clip";
   els.form.reset();
   els.preview.innerHTML = "";
+
   if (state.previewBlobUrl) {
     try { URL.revokeObjectURL(state.previewBlobUrl); } catch {}
     state.previewBlobUrl = null;
   }
+
   state.editingId = null;
   els.fieldId.value = "";
 
@@ -106,9 +126,18 @@ function openModal(mode = "add", data = null) {
 function closeModal() {
   els.modal.classList.add("hidden");
   els.modal.setAttribute("aria-hidden", "true");
+
+  // Limpia preview al cerrar por si quedó url blob
+  els.preview.innerHTML = "";
+  if (state.previewBlobUrl) {
+    try { URL.revokeObjectURL(state.previewBlobUrl); } catch {}
+    state.previewBlobUrl = null;
+  }
 }
 
-/* ---------- Render ---------- */
+/* ===========================
+   Render
+   =========================== */
 function renderClips(docs) {
   const grid = els.grid;
   grid.innerHTML = "";
@@ -122,49 +151,26 @@ function renderClips(docs) {
     card.className = "card";
     card.setAttribute("role", "listitem");
 
-    // THUMB
-    const thumbWrap = document.createElement("div");
-    thumbWrap.className = "thumb";
+    // THUMB (prioridad: image -> video directo -> YouTube -> placeholder)
+    let thumbAdded = false;
 
-    if (data.url) {
-      if (isDirectVideo(data.url)) {
-        const vid = document.createElement("video");
-        vid.className = "thumb";
-        vid.src = data.url;
-        vid.muted = true;
-        vid.playsInline = true;
-        vid.controls = true;
-        thumbWrap.replaceWith(vid); // usar <video> como thumb
-      } else {
-        // Miniatura de YouTube si aplica
-        const yt = getYoutubeThumb(data.url);
-        if (yt) {
-          const img = document.createElement("img");
-          img.className = "thumb";
-          img.src = yt;
-          img.alt = "Miniatura del clip";
-          grid.appendChild(card);
-          card.append(img);
-        } else {
-          // Placeholder para enlaces no reconocidos
-          thumbWrap.style.display = "grid";
-          thumbWrap.style.placeItems = "center";
-          thumbWrap.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
-          thumbWrap.style.color = "var(--muted)";
-          thumbWrap.style.fontWeight = "600";
-          thumbWrap.textContent = "Clip (enlace)";
-          card.append(thumbWrap);
-        }
-      }
-    } else {
-      // Sin URL: placeholder
-      thumbWrap.style.display = "grid";
-      thumbWrap.style.placeItems = "center";
-      thumbWrap.style.background = "linear-gradient(180deg, rgba(0,255,136,.1), rgba(0,0,0,0))";
-      thumbWrap.style.color = "var(--muted)";
-      thumbWrap.style.fontWeight = "600";
-      thumbWrap.textContent = "Clip";
-      card.append(thumbWrap);
+    if (data.image && typeof data.image === "string") {
+      const img = document.createElement("img");
+      img.className = "thumb";
+      img.src = data.image;
+      img.alt = data.title || "Miniatura del clip";
+      img.loading = "lazy";
+      img.onerror = () => {
+        card.removeChild(img);
+        // Fallback a URL del clip (YT/Video) o placeholder:
+        addThumbFromUrl(data, card);
+      };
+      card.appendChild(img);
+      thumbAdded = true;
+    }
+
+    if (!thumbAdded) {
+      addThumbFromUrl(data, card);
     }
 
     // BODY
@@ -231,20 +237,61 @@ function renderClips(docs) {
   });
 }
 
-/* ---------- Tiempo real + límite ---------- */
+/** Intenta añadir thumb desde data.url (video directo / YouTube) o hace placeholder */
+function addThumbFromUrl(data, card) {
+  if (data?.url) {
+    if (isDirectVideo(data.url)) {
+      const vid = document.createElement("video");
+      vid.className = "thumb";
+      vid.src = data.url;
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.controls = true;
+      card.appendChild(vid);
+      return;
+    } else {
+      const yt = getYoutubeThumb(data.url);
+      if (yt) {
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.src = yt;
+        img.alt = "Miniatura del clip";
+        img.loading = "lazy";
+        img.onerror = () => {
+          card.removeChild(img);
+          setPlaceholderThumb(card, "Clip");
+        };
+        card.appendChild(img);
+        return;
+      }
+    }
+  }
+  setPlaceholderThumb(card, "Clip");
+}
+
+/* ===========================
+   Tiempo real + límite
+   =========================== */
 const qClips = query(clipsRef, orderBy("createdAt", "desc"));
-onSnapshot(qClips, (snapshot) => {
-  const docs = snapshot.docs;
-  state.currentCount = docs.length;
 
-  btnAddSetDisabled(state.currentCount >= MAX_CLIPS);
-  renderClips(docs);
-}, (err) => {
-  console.error("onSnapshot error:", err);
-  setCloudStatus("Error de sincronización", "error");
-});
+onSnapshot(
+  qClips,
+  (snapshot) => {
+    const docs = snapshot.docs;
+    state.currentCount = docs.length;
 
-/* ---------- Abrir/Cerrar modal ---------- */
+    btnAddSetDisabled(state.currentCount >= MAX_CLIPS);
+    renderClips(docs);
+  },
+  (err) => {
+    console.error("onSnapshot error:", err);
+    setCloudStatus("Error de sincronización", "error");
+  }
+);
+
+/* ===========================
+   Abrir/Cerrar modal
+   =========================== */
 els.addBtn?.addEventListener("click", () => {
   if (state.currentCount >= MAX_CLIPS) {
     showToast(`Solo se permiten ${MAX_CLIPS} clips. Elimina uno para agregar otro.`);
@@ -259,7 +306,9 @@ els.modal?.addEventListener("click", (e) => {
   if (e.target === els.modal) closeModal();
 });
 
-/* ---------- Vista previa de archivo local ---------- */
+/* ===========================
+   Vista previa de archivo local
+   =========================== */
 els.fieldFile?.addEventListener("change", () => {
   els.preview.innerHTML = "";
   if (state.previewBlobUrl) {
@@ -277,7 +326,9 @@ els.fieldFile?.addEventListener("change", () => {
   els.preview.appendChild(vid);
 });
 
-/* ---------- Guardar (Agregar/Editar) ---------- */
+/* ===========================
+   Guardar (Agregar/Editar)
+   =========================== */
 els.form?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = els.fieldTitle.value.trim();
@@ -321,6 +372,9 @@ els.form?.addEventListener("submit", async (e) => {
       if (typeof url === "string") payload.url = url;
       if (storagePath) payload.storagePath = storagePath;
 
+      // Si quieres permitir miniatura personalizada:
+      // payload.image = els.fieldImage?.value?.trim() || prev.image || null;
+
       await updateDoc(doc(db, "clips", id), payload);
       savedOk = true;
       showToast("Clip actualizado");
@@ -329,6 +383,7 @@ els.form?.addEventListener("submit", async (e) => {
         title,
         url: url || "",
         storagePath: storagePath || null,
+        // image: els.fieldImage?.value?.trim() || null, // si agregas campo para miniatura opcional
         createdAt: serverTimestamp()
       });
       savedOk = true;
@@ -341,7 +396,6 @@ els.form?.addEventListener("submit", async (e) => {
   } finally {
     setCloudStatus("Listo");
     if (savedOk) {
-      // limpia preview y cierra modal
       els.form.reset();
       els.preview.innerHTML = "";
       if (state.previewBlobUrl) {

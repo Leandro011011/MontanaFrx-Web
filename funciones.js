@@ -33,7 +33,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-/** 🔧 REEMPLAZA POR TU CONFIG DE FIREBASE **/
+/** 🔧 REEMPLAZA POR TU CONFIG DE FIREBASE (si lo vas a usar) **/
 const firebaseConfig = {
   apiKey: "TU_API_KEY",
   authDomain: "TU_PROJECT_ID.firebaseapp.com",
@@ -51,8 +51,9 @@ try {
   storage = getStorage(app);
   setCloudStatus("Conectado ✔");
 } catch (err) {
-  console.error("Firebase init error:", err);
-  setCloudStatus("Error al conectar a la nube", "error");
+  // Si aún no configuraste Firebase, aquí caerá: dejamos un estado legible y seguimos
+  console.warn("Firebase init (opcional) no configurado o falló:", err?.message || err);
+  setCloudStatus("Modo local", "info");
 }
 
 export { db, storage };
@@ -152,17 +153,15 @@ export { db, storage };
 
 /* ===========================
    Horarios (UTC-5, cruce medianoche)
-   L-M-Mi-J-V-D: 21:45–01:00, Sábado: descanso
+   L, M, Mi, J, V y D: 21:45–01:00 · Sábado: descanso
    =========================== */
 (function schedule() {
   const tbody = $("#schedule-body");
   if (!tbody) return;
 
   const TZ = "America/Guayaquil";
-  const days = ["domingo", "lunes", "miércoles","martes", "jueves", "viernes", "sábado"]; // <- ojo: corrige al tuyo si cambias
-  // Mejor mantener orden normal:
-  const dayNames = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
 
+  // Reglas mapeadas al índice nativo de JS: 0=domingo … 6=sábado
   const rules = {
     0: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // domingo
     1: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // lunes
@@ -170,9 +169,10 @@ export { db, storage };
     3: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // miércoles
     4: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // jueves
     5: { start: { h: 21, m: 45 }, end: { h: 1, m: 0 }, off: false }, // viernes
-    6: { start: null, end: null, off: true }                           // sábado
+    6: { start: null, end: null, off: true }                          // sábado (descanso)
   };
 
+  const dayNames = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
   const mins = (h, m) => h * 60 + m;
 
   function nowTZ() {
@@ -183,20 +183,21 @@ export { db, storage };
       weekday: "long"
     });
     const parts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
-    const dow = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]
-      .indexOf(parts.weekday.toLowerCase());
+    const dow = dayNames.indexOf(parts.weekday.toLowerCase());
     return { h:+parts.hour, m:+parts.minute, dow };
   }
- 
+
   function isLiveForDay(dayIndex, now) {
     const rule = rules[dayIndex];
     if (!rule || rule.off) return false;
     const s = mins(rule.start.h, rule.start.m);
     const e = mins(rule.end.h, rule.end.m);
     const n = mins(now.h, now.m);
-    if (e <= s) { // cruza medianoche
-      if (n >= s) return true; // noche del mismo día
-      const prev = (dayIndex + 6) % 7;
+
+    if (e <= s) {
+      // Cruza medianoche (21:45→01:00)
+      if (n >= s) return true;               // noche del mismo día
+      const prev = (dayIndex + 6) % 7;       // madrugada: pertenece al día anterior
       const pr = rules[prev];
       if (pr && !pr.off) {
         const pe = mins(pr.end.h, pr.end.m);
@@ -214,12 +215,13 @@ export { db, storage };
   function render() {
     const now = nowTZ();
     tbody.innerHTML = "";
+
     for (let i = 0; i < 7; i++) {
       const rule = rules[i];
       const tr = document.createElement("tr");
 
       const tdDay = document.createElement("td");
-      const name = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][i];
+      const name = dayNames[i];
       tdDay.textContent = name[0].toUpperCase() + name.slice(1);
 
       const tdTime = document.createElement("td");
@@ -227,10 +229,12 @@ export { db, storage };
 
       const tdState = document.createElement("td");
       let live = false;
+
       if (!rule.off) {
         if (i === now.dow) {
           live = isLiveForDay(i, now);
         } else if (i === (now.dow + 6) % 7) {
+          // madrugada del día siguiente: seguimos “en vivo” del actual
           const curr = rules[now.dow];
           if (curr && !curr.off) {
             const ce = mins(curr.end.h, curr.end.m);
@@ -240,6 +244,7 @@ export { db, storage };
           }
         }
       }
+
       tdState.innerHTML = live ? `<span class="badge-live">En directo ahora</span>` : "—";
       if (live) tr.classList.add("active");
 
