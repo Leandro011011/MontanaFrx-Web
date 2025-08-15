@@ -27,6 +27,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
 
+  <!-- Preloads de imágenes above-the-fold -->
+  <link rel="preload" as="image" href="./monta.jpeg" imagesizes="(min-width:560px) 50vw, 100vw" />
+  <link rel="preload" as="image" href="./Tinder.png" imagesizes="(min-width:1024px) 33vw, (min-width:560px) 50vw, 100vw" />
+
   <!-- Estilos -->
   <link rel="stylesheet" href="./Estilo.css" />
 </head>
@@ -46,6 +50,8 @@
           src="https://files.kick.com/images/user/43468998/profile_image/conversion/dbf1b461-3a12-4155-a253-d8c62e45124a-fullsize.webp"
           alt="Logo MontanaFrx"
           class="brand-logo"
+          width="28" height="28"
+          decoding="async"
           style="width:28px;height:28px;border-radius:10px;object-fit:cover;border:1px solid var(--border)"
         />
         <span class="brand-text">MontanaFrx</span>
@@ -91,7 +97,13 @@
         </div>
 
         <aside class="hero-card hero-media">
-          <img id="avatar" class="avatar" src="./monta.jpeg" alt="Avatar de MontanaFrx" loading="eager" />
+          <img
+            id="avatar" class="avatar"
+            src="./monta.jpeg"
+            alt="Avatar de MontanaFrx"
+            width="512" height="512"
+            loading="eager" fetchpriority="high" decoding="async"
+          />
           <p class="lemma-secondary">“BIENVENIDOS A LOS M, UNANSE A LOS M”</p>
         </aside>
       </div>
@@ -192,9 +204,13 @@
         <div class="clip-grid" role="list">
           <!-- CLIP 1 -->
           <article class="card" role="listitem">
-            <img class="thumb"
+            <img
+              class="thumb"
               src="./Tinder.png"
-              alt="MONTA ENCUENTRA EL AMOR EN SOCIAL MEDIA — miniatura" loading="lazy" />
+              alt="MONTA ENCUENTRA EL AMOR EN SOCIAL MEDIA — miniatura"
+              width="1280" height="720"
+              loading="eager" fetchpriority="high" decoding="async"
+            />
             <div class="card-body">
               <h3 class="card-title">MONTA ENCUENTRA EL AMOR EN SOCIAL MEDIA</h3>
               <div class="card-actions">
@@ -207,9 +223,13 @@
 
           <!-- CLIP 2 -->
           <article class="card" role="listitem">
-            <img class="thumb"
+            <img
+              class="thumb"
               src="./monta_.jpg"
-              alt="MONTA? — miniatura" loading="lazy" />
+              alt="MONTA? — miniatura"
+              width="1280" height="720"
+              loading="lazy" decoding="async"
+            />
             <div class="card-body">
               <h3 class="card-title">MONTA?</h3>
               <div class="card-actions">
@@ -222,9 +242,13 @@
 
           <!-- CLIP 3 -->
           <article class="card" role="listitem">
-            <img class="thumb"
+            <img
+              class="thumb"
               src="./menestra.jpg"
-              alt="MENESTRA CON CUERITO DE CHANCHO — miniatura" loading="lazy" />
+              alt="MENESTRA CON CUERITO DE CHANCHO — miniatura"
+              width="1280" height="720"
+              loading="lazy" decoding="async"
+            />
             <div class="card-body">
               <h3 class="card-title">MENESTRA CON CUERITO DE CHANCHO 💅💅</h3>
               <div class="card-actions">
@@ -237,7 +261,12 @@
 
           <!-- CLIP 4 (placeholder) -->
           <article class="card" role="listitem">
-            <img class="thumb" src="monta.jpeg" alt="Clip próximamente — miniatura" loading="lazy" />
+            <img
+              class="thumb" src="monta.jpeg"
+              alt="Clip próximamente — miniatura"
+              width="1280" height="720"
+              loading="lazy" decoding="async"
+            />
             <div class="card-body">
               <h3 class="card-title">Próximamente</h3>
               <div class="card-actions">
@@ -248,7 +277,12 @@
 
           <!-- CLIP 5 (placeholder) -->
           <article class="card" role="listitem">
-            <img class="thumb" src="monta.jpeg" alt="Clip próximamente — miniatura" loading="lazy" />
+            <img
+              class="thumb" src="monta.jpeg"
+              alt="Clip próximamente — miniatura"
+              width="1280" height="720"
+              loading="lazy" decoding="async"
+            />
             <div class="card-body">
               <h3 class="card-title">Próximamente</h3>
               <div class="card-actions">
@@ -259,7 +293,12 @@
 
           <!-- CLIP 6 (placeholder) -->
           <article class="card" role="listitem">
-            <img class="thumb" src="monta.jpeg" alt="Clip próximamente — miniatura" loading="lazy" />
+            <img
+              class="thumb" src="monta.jpeg"
+              alt="Clip próximamente — miniatura"
+              width="1280" height="720"
+              loading="lazy" decoding="async"
+            />
             <div class="card-body">
               <h3 class="card-title">Próximamente</h3>
               <div class="card-actions">
